@@ -27,6 +27,26 @@ textarea {
   font: inherit;
 }
 
+fieldset {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 0;
+  padding: 12px;
+}
+
+legend {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 6px;
+}
+
+.weekly-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
 button {
   min-height: 40px;
   border: 1px solid var(--brand);
@@ -82,11 +102,41 @@ button.secondary,
   gap: 16px;
 }
 
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tab {
+  background: white;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.tab.is-active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: white;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.is-visible {
+  display: grid;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 18px;
+}
+
+.wide-panel {
+  grid-column: 1 / -1;
 }
 
 .panel h2 {
@@ -106,6 +156,16 @@ label {
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
+}
+
+.check-row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.check-row input {
+  width: auto;
 }
 
 input,

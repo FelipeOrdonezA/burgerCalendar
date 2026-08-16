@@ -2,6 +2,8 @@ import express, { type Request, type Response } from "express";
 import cors from "cors";
 import categoriesRoutes from "../routes/categories.routes";
 import employeesRoutes from "../routes/employees.routes";
+import sitesRoutes from "../routes/sites.routes";
+import staffRequirementsRoutes from "../routes/staff-requirements.routes";
 
 const app = express();
 
@@ -15,6 +17,8 @@ app.get("/", (_req: Request, res: Response) => {
 
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/employees", employeesRoutes);
+app.use("/api/sites", sitesRoutes);
+app.use("/api/staff-requirements", staffRequirementsRoutes);
 
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({

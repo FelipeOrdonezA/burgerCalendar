@@ -42,21 +42,16 @@ Actualmente el sistema contempla los siguientes establecimientos:
 
 ## Estado actual
 
-El proyecto se encuentra en desarrollo.
+El proyecto se encuentra en desarrollo y ya alcanzo su primer hito funcional: la configuracion inicial de la aplicacion.
 
-Actualmente se está implementando la API REST del backend y se han creado las primeras rutas CRUD para el recurso de empleados.
+Este hito cubre las entidades que se configuran al inicio y luego solo se modifican cuando cambia la operacion:
 
-Por el momento, los controladores devuelven respuestas de prueba para validar correctamente el flujo:
+- Categorias o cargos operativos.
+- Empleados asociados a una categoria.
+- Sedes o puntos de venta.
+- Requerimientos de personal por sede, categoria, dia de la semana y festivo.
 
-```text
-Petición HTTP
-    ↓
-Ruta
-    ↓
-Controlador
-    ↓
-Respuesta HTTP
-```
+La informacion se persiste en archivos JSON dentro de `backend/src/data`, sin base de datos externa para esta fase del MVP.
 
 ## Tecnologías
 
@@ -66,6 +61,13 @@ Respuesta HTTP
 - Express
 - TypeScript
 - CORS
+
+### Frontend
+
+- HTML
+- CSS
+- JavaScript
+- Servidor estatico local con `serve`
 
 ### Herramientas de desarrollo
 
@@ -80,18 +82,17 @@ El backend utiliza una separación por responsabilidades:
 
 ```text
 src/
+├── controllers/
+├── data/
+├── repositories/
+├── routes/
+├── scripts/
+├── services/
+├── tests/
+├── types/
 ├── utils/
 │   └── app.ts
-│   └──server.ts
-├── routes/
-│   └── employees.routes.ts
-├── controllers/
-│   └── employees.controller.ts
-├── services/
-├── repositories/
-├── middlewares/
-├── schemas/
-└── types/
+│   └── server.ts
 ```
 
 ### Responsabilidad de cada capa
@@ -103,24 +104,101 @@ src/
 - **Middlewares:** procesan peticiones antes o después de los controladores.
 - **Schemas:** validan la estructura de los datos recibidos.
 - **Types:** contienen tipos e interfaces de TypeScript.
+- **Scripts:** contienen tareas manuales de mantenimiento, como reiniciar archivos JSON.
+- **Data:** contiene los archivos JSON que actuan como almacenamiento del MVP.
 
-## Endpoints de empleados
+## Hito 1: configuracion inicial
 
-La API utiliza el prefijo:
+La primera fase funcional permite administrar los datos base que necesita el futuro generador de cronogramas.
 
-```http
-/api/employees
+### Categorias
+
+Las categorias representan cargos o tipos de personal, por ejemplo:
+
+- Cajero.
+- Planchero.
+- Atencion.
+- Apoyo temporal.
+
+Cada categoria puede marcarse como temporal. Esta marca se usara mas adelante para excluir empleados temporales de validaciones como descanso semanal obligatorio.
+
+### Empleados
+
+Los empleados se crean con:
+
+- Nombre.
+- Categoria.
+- Telefono opcional.
+- Notas opcionales.
+
+La categoria permite que el sistema entienda que rol puede cumplir la persona.
+
+### Sedes
+
+Las sedes representan los puntos de venta o lugares de operacion. Por ahora tienen:
+
+- Nombre.
+- Ubicacion.
+
+### Requerimientos de personal
+
+Los requerimientos definen cuantas personas se necesitan por sede y categoria.
+
+Cada requerimiento guarda cantidades para:
+
+- Lunes.
+- Martes.
+- Miercoles.
+- Jueves.
+- Viernes.
+- Sabado.
+- Domingo.
+- Festivo.
+
+Esto permite modelar casos como una sede que requiere dos plancheros de lunes a jueves, tres de viernes a domingo y tres en festivos.
+
+## Persistencia en JSON
+
+Durante esta fase no se usa base de datos. Cada entidad se guarda en un archivo JSON dentro de `backend/src/data`:
+
+```text
+categories.json
+employees.json
+sites.json
+staff-requirements.json
 ```
 
-Endpoints CRUD previstos:
+Para limpiar los datos de prueba y volver a un estado vacio:
 
-| Método | Endpoint | Descripción |
+```bash
+cd backend
+npm run data:reset
+```
+
+El script detecta automaticamente los archivos `.json` ubicados directamente en `backend/src/data` y los reinicia a arreglos vacios.
+
+## Endpoints principales
+
+La API expone recursos REST para la configuracion inicial:
+
+| Metodo | Endpoint | Descripcion |
 |---|---|---|
-| GET | `/api/employees` | Obtener todos los empleados |
-| GET | `/api/employees/:id` | Obtener un empleado por identificador |
-| POST | `/api/employees` | Crear un empleado |
-| PATCH | `/api/employees/:id` | Actualizar parcialmente un empleado |
-| DELETE | `/api/employees/:id` | Eliminar un empleado |
+| GET | `/api/categories` | Listar categorias |
+| POST | `/api/categories` | Crear categoria |
+| PATCH | `/api/categories/:id` | Actualizar categoria |
+| DELETE | `/api/categories/:id` | Eliminar categoria |
+| GET | `/api/employees` | Listar empleados |
+| POST | `/api/employees` | Crear empleado |
+| PATCH | `/api/employees/:id` | Actualizar empleado |
+| DELETE | `/api/employees/:id` | Eliminar empleado |
+| GET | `/api/sites` | Listar sedes |
+| POST | `/api/sites` | Crear sede |
+| PATCH | `/api/sites/:id` | Actualizar sede |
+| DELETE | `/api/sites/:id` | Eliminar sede |
+| GET | `/api/staff-requirements` | Listar requerimientos |
+| POST | `/api/staff-requirements` | Crear requerimiento |
+| PATCH | `/api/staff-requirements/:id` | Actualizar requerimiento |
+| DELETE | `/api/staff-requirements/:id` | Eliminar requerimiento |
 
 ## Códigos HTTP utilizados
 
@@ -191,6 +269,23 @@ La vista web inicia en:
 http://localhost:5173
 ```
 
+## Pruebas
+
+El backend cuenta con pruebas de servicios para validar la logica sin levantar el servidor HTTP.
+
+Desde `backend`:
+
+```bash
+npm run test:services
+```
+
+Actualmente las pruebas cubren:
+
+- Categorias.
+- Empleados.
+- Sedes.
+- Requerimientos de personal.
+
 ## Endpoints de verificación
 
 ### Ruta principal
@@ -220,12 +315,12 @@ Respuesta esperada:
 }
 ```
 
-## Ejemplo de creación de un empleado
+## Ejemplo de creacion de un requerimiento
 
 Petición:
 
 ```http
-POST /api/employees
+POST /api/staff-requirements
 Content-Type: application/json
 ```
 
@@ -233,23 +328,19 @@ Cuerpo:
 
 ```json
 {
-  "name": "Carlos Gómez",
-  "role": "cashier",
-  "store": "Burger Zona Rosa"
-}
-```
-
-Respuesta de prueba:
-
-```json
-{
-  "ok": true,
-  "message": "Empleado creado correctamente",
-  "data": {
-    "name": "Carlos Gómez",
-    "role": "cashier",
-    "store": "Burger Zona Rosa"
-  }
+  "siteId": "id-de-la-sede",
+  "categoryId": "id-de-la-categoria",
+  "weeklyQuantities": {
+    "monday": 2,
+    "tuesday": 2,
+    "wednesday": 2,
+    "thursday": 2,
+    "friday": 3,
+    "saturday": 3,
+    "sunday": 3,
+    "holiday": 3
+  },
+  "notes": "Refuerzo de fin de semana"
 }
 ```
 
@@ -298,15 +389,12 @@ El proyecto busca aplicar:
 
 ## Próximos pasos
 
-- Definir el modelo de datos de empleados.
-- Implementar validaciones de entrada.
-- Crear la capa de servicios.
-- Configurar la conexión con la base de datos.
-- Persistir empleados.
+- Mejorar la edicion desde frontend.
 - Implementar manejo centralizado de errores.
-- Crear pruebas unitarias.
 - Modelar restricciones y reglas del cronograma.
 - Implementar el generador de horarios.
+- Validar descanso semanal excluyendo categorias temporales.
+- Generar una propuesta semanal de turnos.
 - Documentar la API.
 
 ## Objetivo de aprendizaje

@@ -29,6 +29,7 @@ export async function createCategory(input: CategoryInput): Promise<Category> {
     id: randomUUID(),
     name,
     description: input.description?.trim() || "",
+    temporary: input.temporary ?? false,
     active: input.active ?? true,
     createdAt: now,
     updatedAt: now,
@@ -59,6 +60,7 @@ export async function updateCategory(id: string, input: CategoryInput): Promise<
     ...current,
     name: nextName || current.name,
     description: input.description !== undefined ? input.description.trim() : current.description,
+    temporary: input.temporary ?? current.temporary,
     active: input.active ?? current.active,
     updatedAt: new Date().toISOString(),
   };

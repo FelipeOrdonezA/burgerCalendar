@@ -18,7 +18,13 @@
 
       <section id="statusMessage" class="status-message" hidden></section>
 
-      <div class="layout">
+      <nav class="tabs" aria-label="Secciones de configuracion">
+        <button class="tab is-active" type="button" data-tab="people">Equipo</button>
+        <button class="tab" type="button" data-tab="sites">Sedes</button>
+        <button class="tab" type="button" data-tab="requirements">Requerimientos</button>
+      </nav>
+
+      <div class="layout tab-panel is-visible" id="peoplePanel">
         <section class="panel">
           <h2>Categorias</h2>
           <form id="categoryForm" class="form">
@@ -29,6 +35,10 @@
             <label>
               Descripcion
               <textarea id="categoryDescription" rows="3" placeholder="Uso o alcance de la categoria"></textarea>
+            </label>
+            <label class="check-row">
+              <input id="categoryTemporary" type="checkbox" />
+              Categoria temporal
             </label>
             <button type="submit">Crear categoria</button>
           </form>
@@ -57,6 +67,81 @@
             <button type="submit">Crear empleado</button>
           </form>
           <div id="employeesList" class="list"></div>
+        </section>
+      </div>
+
+      <div class="layout tab-panel" id="sitesPanel">
+        <section class="panel wide-panel">
+          <h2>Sedes</h2>
+          <form id="siteForm" class="form">
+            <label>
+              Nombre
+              <input id="siteName" type="text" required placeholder="Ej: Burger Zona Rosa" />
+            </label>
+            <label>
+              Ubicacion
+              <input id="siteLocation" type="text" placeholder="Direccion o referencia" />
+            </label>
+            <button type="submit">Crear sede</button>
+          </form>
+          <div id="sitesList" class="list"></div>
+        </section>
+      </div>
+
+      <div class="layout tab-panel" id="requirementsPanel">
+        <section class="panel wide-panel">
+          <h2>Requerimientos de personal</h2>
+          <form id="requirementForm" class="form">
+            <label>
+              Sede
+              <select id="requirementSite" required></select>
+            </label>
+            <label>
+              Categoria
+              <select id="requirementCategory" required></select>
+            </label>
+            <fieldset class="weekly-grid">
+              <legend>Cantidades por dia</legend>
+              <label>
+                Lunes
+                <input id="requirementMonday" type="number" min="0" step="1" required value="0" />
+              </label>
+              <label>
+                Martes
+                <input id="requirementTuesday" type="number" min="0" step="1" required value="0" />
+              </label>
+              <label>
+                Miercoles
+                <input id="requirementWednesday" type="number" min="0" step="1" required value="0" />
+              </label>
+              <label>
+                Jueves
+                <input id="requirementThursday" type="number" min="0" step="1" required value="0" />
+              </label>
+              <label>
+                Viernes
+                <input id="requirementFriday" type="number" min="0" step="1" required value="0" />
+              </label>
+              <label>
+                Sabado
+                <input id="requirementSaturday" type="number" min="0" step="1" required value="0" />
+              </label>
+              <label>
+                Domingo
+                <input id="requirementSunday" type="number" min="0" step="1" required value="0" />
+              </label>
+              <label>
+                Festivo
+                <input id="requirementHoliday" type="number" min="0" step="1" required value="0" />
+              </label>
+            </fieldset>
+            <label>
+              Notas
+              <textarea id="requirementNotes" rows="3" placeholder="Observaciones operativas"></textarea>
+            </label>
+            <button type="submit">Crear requerimiento</button>
+          </form>
+          <div id="requirementsList" class="list"></div>
         </section>
       </div>
     </main>

@@ -10,6 +10,7 @@
     "start": "npm run build && node ./dist/utils/server.js",
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only ./src/utils/server.ts",
+    "data:reset": "ts-node ./src/scripts/reset-data.ts",
     "test:services": "ts-node ./src/tests/services.test.ts"
   },
   "dependencies": {
