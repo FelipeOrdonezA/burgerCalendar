@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Burger Calendar MVP</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Burger Paisa Calendar</p>
+          <h1>Configuracion inicial</h1>
+        </div>
+        <button id="refreshButton" type="button">Actualizar datos</button>
+      </header>
+
+      <section id="statusMessage" class="status-message" hidden></section>
+
+      <div class="layout">
+        <section class="panel">
+          <h2>Categorias</h2>
+          <form id="categoryForm" class="form">
+            <label>
+              Nombre
+              <input id="categoryName" type="text" required placeholder="Ej: Planchero" />
+            </label>
+            <label>
+              Descripcion
+              <textarea id="categoryDescription" rows="3" placeholder="Uso o alcance de la categoria"></textarea>
+            </label>
+            <button type="submit">Crear categoria</button>
+          </form>
+          <div id="categoriesList" class="list"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Empleados</h2>
+          <form id="employeeForm" class="form">
+            <label>
+              Nombre
+              <input id="employeeName" type="text" required placeholder="Nombre del empleado" />
+            </label>
+            <label>
+              Categoria
+              <select id="employeeCategory" required></select>
+            </label>
+            <label>
+              Telefono
+              <input id="employeePhone" type="text" placeholder="Opcional" />
+            </label>
+            <label>
+              Notas
+              <textarea id="employeeNotes" rows="3" placeholder="Disponibilidad, sede, observaciones"></textarea>
+            </label>
+            <button type="submit">Crear empleado</button>
+          </form>
+          <div id="employeesList" class="list"></div>
+        </section>
+      </div>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

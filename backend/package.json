@@ -9,7 +9,8 @@
   "scripts": {
     "start": "npm run build && node ./dist/utils/server.js",
     "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only ./src/utils/server.ts"
+    "dev": "ts-node-dev --respawn --transpile-only ./src/utils/server.ts",
+    "test:services": "ts-node ./src/tests/services.test.ts"
   },
   "dependencies": {
     "axios": "^1.18.1",

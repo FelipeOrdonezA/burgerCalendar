@@ -1,5 +1,6 @@
 import express, { type Request, type Response } from "express";
 import cors from "cors";
+import categoriesRoutes from "../routes/categories.routes";
 import employeesRoutes from "../routes/employees.routes";
 
 const app = express();
@@ -12,6 +13,7 @@ app.get("/", (_req: Request, res: Response) => {
   res.send("Servidor Express con TypeScript y Node.js funcionando correctamente");
 });
 
+app.use("/api/categories", categoriesRoutes);
 app.use("/api/employees", employeesRoutes);
 
 app.get("/api/health", (_req: Request, res: Response) => {

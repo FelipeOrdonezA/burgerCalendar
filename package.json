@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "frontend": "npx serve frontend -l 5173",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
