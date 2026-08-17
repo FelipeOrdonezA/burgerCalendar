@@ -162,7 +162,7 @@ Campos principales:
 
 El ordenamiento define el orden visual de los cargos en el cronograma. El número menor aparece primero.
 
-La marca temporal permite excluir empleados de esa categoría de validaciones de descanso semanal.
+La marca temporal permite excluir empleados de esa categoría del control de descansos. Estos empleados no aparecen en el resumen de descansos ni generan alertas por descansar cero, una o varias veces.
 
 ### Empleados
 

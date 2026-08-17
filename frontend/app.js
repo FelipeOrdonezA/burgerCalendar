@@ -757,19 +757,17 @@ function getRestingEmployees(dayKey) {
       .map(([, employeeId]) => employeeId),
   );
 
-  return state.employees.filter((employee) => employee.active !== false && !assignedEmployeeIds.has(employee.id));
+  return getEmployeesForRestValidation().filter((employee) => !assignedEmployeeIds.has(employee.id));
 }
 
 function renderRestPill(employee, restDayCounts, dayKey) {
-  const category = state.categories.find((item) => item.id === employee.categoryId);
-  const validatesRest = !category?.temporary;
   const restAlerts = [];
 
-  if (validatesRest && Number(restDayCounts[employee.id] || 0) > 1) {
+  if (Number(restDayCounts[employee.id] || 0) > 1) {
     restAlerts.push("Descansa mas de una vez en la semana.");
   }
 
-  if (validatesRest && WEEKEND_REST_DAYS.includes(dayKey)) {
+  if (WEEKEND_REST_DAYS.includes(dayKey)) {
     restAlerts.push("No debe descansar viernes, sabado o domingo.");
   }
 
@@ -1089,12 +1087,13 @@ function getTeamSummaryRows() {
       const employeeAssignments = assignmentDetails.filter((detail) => detail.employeeId === employee.id);
       const assignmentDays = [...new Set(employeeAssignments.map((detail) => detail.dayKey))];
       const restDays = DAYS.filter(([dayKey]) => !assignmentDays.includes(dayKey));
+      const isTemporary = Boolean(category?.temporary);
 
       return {
         employee,
         category,
-        typeLabel: category?.temporary ? "temporal" : "fijo",
-        restText: restDays.length ? formatDayList(restDays) : "Sin descanso",
+        typeLabel: isTemporary ? "temporal" : "fijo",
+        restText: isTemporary ? "No aplica" : restDays.length ? formatDayList(restDays) : "Sin descanso",
         assignmentDaysCount: assignmentDays.length,
         assignmentsText: employeeAssignments
           .map((detail) => `${getDayLabel(detail.dayKey)}: ${detail.siteName} · ${detail.categoryName} #${detail.slotIndex}`)
