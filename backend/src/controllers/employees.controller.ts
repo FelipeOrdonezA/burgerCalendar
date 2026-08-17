@@ -62,6 +62,15 @@ function employeeErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message === "EMPLOYEE_CATEGORY_NOT_FOUND") {
     return "La categoria indicada no existe";
   }
+  if (error instanceof Error && error.message === "EMPLOYEE_PREFERRED_SITE_NOT_FOUND") {
+    return "La sede habitual indicada no existe";
+  }
+  if (error instanceof Error && error.message === "EMPLOYEE_BACKUP_CATEGORIES_INVALID") {
+    return "Las categorias de reemplazo no son validas";
+  }
+  if (error instanceof Error && error.message === "EMPLOYEE_BACKUP_CATEGORY_NOT_FOUND") {
+    return "Una categoria de reemplazo indicada no existe";
+  }
 
   return "El nombre del empleado es obligatorio";
 }

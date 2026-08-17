@@ -4,6 +4,8 @@ import categoriesRoutes from "../routes/categories.routes";
 import employeesRoutes from "../routes/employees.routes";
 import sitesRoutes from "../routes/sites.routes";
 import staffRequirementsRoutes from "../routes/staff-requirements.routes";
+import calendarsRoutes from "../routes/calendars.routes";
+import tasksRoutes from "../routes/tasks.routes";
 
 const app = express();
 
@@ -19,6 +21,8 @@ app.use("/api/categories", categoriesRoutes);
 app.use("/api/employees", employeesRoutes);
 app.use("/api/sites", sitesRoutes);
 app.use("/api/staff-requirements", staffRequirementsRoutes);
+app.use("/api/calendars", calendarsRoutes);
+app.use("/api/tasks", tasksRoutes);
 
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({

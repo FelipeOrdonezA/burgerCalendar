@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "07235eb6-c3c7-4a94-ac95-2eee6ac9ed4d",
+    "name": "Zona Rosa",
+    "location": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:12:59.319Z",
+    "updatedAt": "2026-08-17T00:12:59.319Z"
+  },
+  {
+    "id": "9bf66f0e-753e-49b8-a0bf-e49335fb2937",
+    "name": "La 16",
+    "location": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:21:40.464Z",
+    "updatedAt": "2026-08-17T00:21:40.464Z"
+  },
+  {
+    "id": "c2c2f51d-a407-46e6-9342-c010612c6dc6",
+    "name": "Arepaisa",
+    "location": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:22:57.366Z",
+    "updatedAt": "2026-08-17T00:22:57.366Z"
+  }
+]

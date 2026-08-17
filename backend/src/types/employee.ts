@@ -2,6 +2,8 @@ export interface Employee {
   id: string;
   name: string;
   categoryId: string;
+  preferredSiteId: string;
+  backupCategoryIds: string[];
   phone: string;
   notes: string;
   active: boolean;
@@ -12,6 +14,8 @@ export interface Employee {
 export interface EmployeeInput {
   name?: string;
   categoryId?: string;
+  preferredSiteId?: string;
+  backupCategoryIds?: string[];
   phone?: string;
   notes?: string;
   active?: boolean;

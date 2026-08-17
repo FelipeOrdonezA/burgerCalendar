@@ -7,143 +7,288 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <header class="page-header">
-        <div>
+    <main>
+      <section id="homeView" class="app-view home-view is-visible">
+        <div class="home-shell">
           <p class="eyebrow">Burger Paisa Calendar</p>
-          <h1>Configuracion inicial</h1>
+          <h1>Panel inicial</h1>
+          <p class="home-copy">
+            Gestiona primero la configuracion base y luego entra al programador semanal.
+          </p>
+          <div class="home-actions">
+            <a class="home-card" href="#/config">
+              <span>Configuracion inicial</span>
+              <strong>Equipo, sedes y requerimientos</strong>
+              <small>Administra los datos base que alimentan el calendario.</small>
+            </a>
+            <a class="home-card" href="#/scheduler">
+              <span>Programador</span>
+              <strong>Calendario semanal</strong>
+              <small>Asigna el personal por sede, dia y requerimiento configurado.</small>
+            </a>
+          </div>
         </div>
-        <button id="refreshButton" type="button">Actualizar datos</button>
-      </header>
+      </section>
 
-      <section id="statusMessage" class="status-message" hidden></section>
+      <section id="configView" class="app-view">
+        <div class="shell">
+          <header class="page-header">
+            <div>
+              <p class="eyebrow">Burger Paisa Calendar</p>
+              <h1>Configuracion inicial</h1>
+            </div>
+            <div class="header-actions">
+              <a class="secondary-link" href="#/">Inicio</a>
+              <button id="refreshButton" type="button">Actualizar datos</button>
+            </div>
+          </header>
 
-      <nav class="tabs" aria-label="Secciones de configuracion">
-        <button class="tab is-active" type="button" data-tab="people">Equipo</button>
-        <button class="tab" type="button" data-tab="sites">Sedes</button>
-        <button class="tab" type="button" data-tab="requirements">Requerimientos</button>
-      </nav>
+          <section id="statusMessage" class="status-message" hidden></section>
 
-      <div class="layout tab-panel is-visible" id="peoplePanel">
-        <section class="panel">
-          <h2>Categorias</h2>
-          <form id="categoryForm" class="form">
+          <nav class="tabs" aria-label="Secciones de configuracion">
+            <button class="tab is-active" type="button" data-config-tab="people">Equipo</button>
+            <button class="tab" type="button" data-config-tab="sites">Sedes</button>
+            <button class="tab" type="button" data-config-tab="requirements">Requerimientos</button>
+            <button class="tab" type="button" data-config-tab="tasks">Tareas</button>
+          </nav>
+
+          <div class="layout config-tab-panel is-visible" id="peoplePanel">
+            <section class="panel">
+              <h2>Categorias</h2>
+              <form id="categoryForm" class="form">
+                <label>
+                  Nombre
+                  <input id="categoryName" type="text" required placeholder="Ej: Planchero" />
+                </label>
+                <label>
+                  Descripcion
+                  <textarea id="categoryDescription" rows="3" placeholder="Uso o alcance de la categoria"></textarea>
+                </label>
+                <label class="check-row">
+                  <input id="categoryTemporary" type="checkbox" />
+                  Categoria temporal
+                </label>
+                <div class="form-actions">
+                  <button id="categorySubmitButton" type="submit">Crear categoria</button>
+                  <button id="categoryCancelButton" class="secondary" type="button" hidden>Cancelar</button>
+                </div>
+              </form>
+              <div id="categoriesList" class="list"></div>
+            </section>
+
+            <section class="panel">
+              <h2>Empleados</h2>
+              <form id="employeeForm" class="form">
+                <label>
+                  Nombre
+                  <input id="employeeName" type="text" required placeholder="Nombre del empleado" />
+                </label>
+                <label>
+                  Categoria
+                  <select id="employeeCategory" required></select>
+                </label>
+                <label>
+                  Sede habitual
+                  <select id="employeePreferredSite"></select>
+                </label>
+                <label>
+                  Puede reemplazar en
+                  <select id="employeeBackupCategories" multiple size="4"></select>
+                </label>
+                <label>
+                  Telefono
+                  <input id="employeePhone" type="text" placeholder="Opcional" />
+                </label>
+                <label>
+                  Notas
+                  <textarea id="employeeNotes" rows="3" placeholder="Disponibilidad, sede, observaciones"></textarea>
+                </label>
+                <label class="check-row">
+                  <input id="employeeActive" type="checkbox" checked />
+                  Activo
+                </label>
+                <div class="form-actions">
+                  <button id="employeeSubmitButton" type="submit">Crear empleado</button>
+                  <button id="employeeCancelButton" class="secondary" type="button" hidden>Cancelar</button>
+                </div>
+              </form>
+              <label class="list-filter">
+                Ver empleados
+                <select id="employeeStatusFilter">
+                  <option value="active">Activos</option>
+                  <option value="inactive">Inactivos</option>
+                  <option value="all">Todos</option>
+                </select>
+              </label>
+              <div id="employeesList" class="list"></div>
+            </section>
+          </div>
+
+          <div class="layout config-tab-panel" id="sitesPanel">
+            <section class="panel wide-panel">
+              <h2>Sedes</h2>
+              <form id="siteForm" class="form">
+                <label>
+                  Nombre
+                  <input id="siteName" type="text" required placeholder="Ej: Burger Zona Rosa" />
+                </label>
+                <label>
+                  Ubicacion
+                  <input id="siteLocation" type="text" placeholder="Direccion o referencia" />
+                </label>
+                <div class="form-actions">
+                  <button id="siteSubmitButton" type="submit">Crear sede</button>
+                  <button id="siteCancelButton" class="secondary" type="button" hidden>Cancelar</button>
+                </div>
+              </form>
+              <div id="sitesList" class="list"></div>
+            </section>
+          </div>
+
+          <div class="layout config-tab-panel" id="requirementsPanel">
+            <section class="panel wide-panel">
+              <h2>Requerimientos de personal</h2>
+              <form id="requirementForm" class="form">
+                <label>
+                  Sede
+                  <select id="requirementSite" required></select>
+                </label>
+                <label>
+                  Categoria
+                  <select id="requirementCategory" required></select>
+                </label>
+                <fieldset class="weekly-grid">
+                  <legend>Cantidades por dia</legend>
+                  <label>
+                    Lunes
+                    <input id="requirementMonday" type="number" min="0" step="1" required value="0" />
+                  </label>
+                  <label>
+                    Martes
+                    <input id="requirementTuesday" type="number" min="0" step="1" required value="0" />
+                  </label>
+                  <label>
+                    Miercoles
+                    <input id="requirementWednesday" type="number" min="0" step="1" required value="0" />
+                  </label>
+                  <label>
+                    Jueves
+                    <input id="requirementThursday" type="number" min="0" step="1" required value="0" />
+                  </label>
+                  <label>
+                    Viernes
+                    <input id="requirementFriday" type="number" min="0" step="1" required value="0" />
+                  </label>
+                  <label>
+                    Sabado
+                    <input id="requirementSaturday" type="number" min="0" step="1" required value="0" />
+                  </label>
+                  <label>
+                    Domingo
+                    <input id="requirementSunday" type="number" min="0" step="1" required value="0" />
+                  </label>
+                  <label>
+                    Festivo
+                    <input id="requirementHoliday" type="number" min="0" step="1" required value="0" />
+                  </label>
+                </fieldset>
+                <label>
+                  Notas
+                  <textarea id="requirementNotes" rows="3" placeholder="Observaciones operativas"></textarea>
+                </label>
+                <div class="form-actions">
+                  <button id="requirementSubmitButton" type="submit">Crear requerimiento</button>
+                  <button id="requirementCancelButton" class="secondary" type="button" hidden>Cancelar</button>
+                </div>
+              </form>
+              <div id="requirementsList" class="list"></div>
+            </section>
+          </div>
+
+          <div class="layout config-tab-panel" id="tasksPanel">
+            <section class="panel wide-panel">
+              <h2>Tareas</h2>
+              <form id="taskForm" class="form">
+                <label>
+                  Nombre
+                  <input id="taskName" type="text" required placeholder="Ej: Aseo general" />
+                </label>
+                <label>
+                  Tipo de asignacion
+                  <select id="taskAssignmentMode" required>
+                    <option value="team">Equipo completo</option>
+                    <option value="person">Responsable especifico</option>
+                  </select>
+                </label>
+                <label>
+                  Descripcion
+                  <textarea id="taskDescription" rows="3" placeholder="Notas o alcance de la tarea"></textarea>
+                </label>
+                <div class="form-actions">
+                  <button id="taskSubmitButton" type="submit">Crear tarea</button>
+                  <button id="taskCancelButton" class="secondary" type="button" hidden>Cancelar</button>
+                </div>
+              </form>
+              <div id="tasksList" class="list"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section id="schedulerView" class="app-view scheduler-view">
+        <aside class="scheduler-sidebar">
+          <div class="sidebar-header">
+            <div>
+              <p class="eyebrow">Burger Paisa Calendar</p>
+              <h1>Programador</h1>
+            </div>
+            <button id="collapseSidebarButton" class="icon-button" type="button" aria-label="Ocultar barra lateral">
+              &lt;
+            </button>
+          </div>
+          <nav class="sidebar-nav" aria-label="Secciones del programador">
+            <button class="sidebar-item is-active" type="button">Cronograma</button>
+            <button class="sidebar-item" type="button" disabled>Equipo</button>
+            <button class="sidebar-item" type="button" disabled>Demanda</button>
+            <button class="sidebar-item" type="button" disabled>Alertas</button>
+          </nav>
+          <a class="sidebar-link" href="#/">Volver al inicio</a>
+        </aside>
+
+        <section class="scheduler-content">
+          <header class="scheduler-topbar">
+            <div>
+              <p class="eyebrow">Calendario semanal</p>
+              <h2>Asignacion inicial por sede</h2>
+              <p>Los puestos se construyen desde los requerimientos configurados.</p>
+            </div>
+            <div class="header-actions">
+              <button id="expandSidebarButton" class="secondary" type="button" hidden>Mostrar menu</button>
+              <button id="schedulerRefreshButton" class="secondary" type="button">Actualizar datos</button>
+              <button id="clearCalendarButton" type="button">Limpiar asignaciones</button>
+            </div>
+          </header>
+
+          <section class="scheduler-controls">
             <label>
-              Nombre
-              <input id="categoryName" type="text" required placeholder="Ej: Planchero" />
+              Semana de trabajo
+              <select id="calendarWeekSelect"></select>
             </label>
-            <label>
-              Descripcion
-              <textarea id="categoryDescription" rows="3" placeholder="Uso o alcance de la categoria"></textarea>
-            </label>
-            <label class="check-row">
-              <input id="categoryTemporary" type="checkbox" />
-              Categoria temporal
-            </label>
-            <button type="submit">Crear categoria</button>
-          </form>
-          <div id="categoriesList" class="list"></div>
+            <div class="calendar-state">
+              <span id="calendarStatusBadge" class="pill">Nuevo borrador</span>
+              <p id="calendarMeta">Selecciona una semana para preparar el calendario.</p>
+            </div>
+            <div class="header-actions">
+              <button id="saveDraftButton" type="button">Guardar borrador</button>
+              <button id="approveCalendarButton" class="secondary" type="button">Aprobar calendario</button>
+              <button id="reopenCalendarButton" class="secondary" type="button" hidden>Volver a borrador</button>
+            </div>
+          </section>
+
+          <div id="calendarGrid" class="calendar-grid"></div>
+          <div id="restsGrid" class="rests-section"></div>
         </section>
-
-        <section class="panel">
-          <h2>Empleados</h2>
-          <form id="employeeForm" class="form">
-            <label>
-              Nombre
-              <input id="employeeName" type="text" required placeholder="Nombre del empleado" />
-            </label>
-            <label>
-              Categoria
-              <select id="employeeCategory" required></select>
-            </label>
-            <label>
-              Telefono
-              <input id="employeePhone" type="text" placeholder="Opcional" />
-            </label>
-            <label>
-              Notas
-              <textarea id="employeeNotes" rows="3" placeholder="Disponibilidad, sede, observaciones"></textarea>
-            </label>
-            <button type="submit">Crear empleado</button>
-          </form>
-          <div id="employeesList" class="list"></div>
-        </section>
-      </div>
-
-      <div class="layout tab-panel" id="sitesPanel">
-        <section class="panel wide-panel">
-          <h2>Sedes</h2>
-          <form id="siteForm" class="form">
-            <label>
-              Nombre
-              <input id="siteName" type="text" required placeholder="Ej: Burger Zona Rosa" />
-            </label>
-            <label>
-              Ubicacion
-              <input id="siteLocation" type="text" placeholder="Direccion o referencia" />
-            </label>
-            <button type="submit">Crear sede</button>
-          </form>
-          <div id="sitesList" class="list"></div>
-        </section>
-      </div>
-
-      <div class="layout tab-panel" id="requirementsPanel">
-        <section class="panel wide-panel">
-          <h2>Requerimientos de personal</h2>
-          <form id="requirementForm" class="form">
-            <label>
-              Sede
-              <select id="requirementSite" required></select>
-            </label>
-            <label>
-              Categoria
-              <select id="requirementCategory" required></select>
-            </label>
-            <fieldset class="weekly-grid">
-              <legend>Cantidades por dia</legend>
-              <label>
-                Lunes
-                <input id="requirementMonday" type="number" min="0" step="1" required value="0" />
-              </label>
-              <label>
-                Martes
-                <input id="requirementTuesday" type="number" min="0" step="1" required value="0" />
-              </label>
-              <label>
-                Miercoles
-                <input id="requirementWednesday" type="number" min="0" step="1" required value="0" />
-              </label>
-              <label>
-                Jueves
-                <input id="requirementThursday" type="number" min="0" step="1" required value="0" />
-              </label>
-              <label>
-                Viernes
-                <input id="requirementFriday" type="number" min="0" step="1" required value="0" />
-              </label>
-              <label>
-                Sabado
-                <input id="requirementSaturday" type="number" min="0" step="1" required value="0" />
-              </label>
-              <label>
-                Domingo
-                <input id="requirementSunday" type="number" min="0" step="1" required value="0" />
-              </label>
-              <label>
-                Festivo
-                <input id="requirementHoliday" type="number" min="0" step="1" required value="0" />
-              </label>
-            </fieldset>
-            <label>
-              Notas
-              <textarea id="requirementNotes" rows="3" placeholder="Observaciones operativas"></textarea>
-            </label>
-            <button type="submit">Crear requerimiento</button>
-          </form>
-          <div id="requirementsList" class="list"></div>
-        </section>
-      </div>
+      </section>
     </main>
 
     <script src="./app.js"></script>

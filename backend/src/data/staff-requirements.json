@@ -1,1 +1,116 @@
-[]
+[
+  {
+    "id": "aee87c88-08e9-44b9-b614-7d4d04371ee8",
+    "siteId": "07235eb6-c3c7-4a94-ac95-2eee6ac9ed4d",
+    "categoryId": "c8866cf0-c08d-446b-b18a-f565ed88f4f9",
+    "weeklyQuantities": {
+      "monday": 1,
+      "tuesday": 1,
+      "wednesday": 1,
+      "thursday": 1,
+      "friday": 1,
+      "saturday": 1,
+      "sunday": 2,
+      "holiday": 2
+    },
+    "notes": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:13:05.673Z",
+    "updatedAt": "2026-08-17T00:13:05.673Z"
+  },
+  {
+    "id": "2d4c42aa-9eb8-4059-bdcb-2ef28c2cc878",
+    "siteId": "9bf66f0e-753e-49b8-a0bf-e49335fb2937",
+    "categoryId": "c8866cf0-c08d-446b-b18a-f565ed88f4f9",
+    "weeklyQuantities": {
+      "monday": 1,
+      "tuesday": 1,
+      "wednesday": 1,
+      "thursday": 1,
+      "friday": 1,
+      "saturday": 1,
+      "sunday": 1,
+      "holiday": 1
+    },
+    "notes": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:21:47.102Z",
+    "updatedAt": "2026-08-17T00:21:47.102Z"
+  },
+  {
+    "id": "04faac56-1781-4a71-9b90-b7883dfe271f",
+    "siteId": "c2c2f51d-a407-46e6-9342-c010612c6dc6",
+    "categoryId": "c8866cf0-c08d-446b-b18a-f565ed88f4f9",
+    "weeklyQuantities": {
+      "monday": 1,
+      "tuesday": 1,
+      "wednesday": 1,
+      "thursday": 1,
+      "friday": 1,
+      "saturday": 1,
+      "sunday": 1,
+      "holiday": 1
+    },
+    "notes": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:23:05.602Z",
+    "updatedAt": "2026-08-17T00:23:05.602Z"
+  },
+  {
+    "id": "06159a05-3f86-4b00-bb1e-58793ee4de3f",
+    "siteId": "07235eb6-c3c7-4a94-ac95-2eee6ac9ed4d",
+    "categoryId": "b7f397ae-05ad-481d-bcf7-530bd9305291",
+    "weeklyQuantities": {
+      "monday": 1,
+      "tuesday": 1,
+      "wednesday": 1,
+      "thursday": 1,
+      "friday": 1,
+      "saturday": 1,
+      "sunday": 1,
+      "holiday": 1
+    },
+    "notes": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:23:12.828Z",
+    "updatedAt": "2026-08-17T00:23:12.828Z"
+  },
+  {
+    "id": "0d87c4a4-74d1-4c51-81b2-82a0576d1ede",
+    "siteId": "9bf66f0e-753e-49b8-a0bf-e49335fb2937",
+    "categoryId": "b7f397ae-05ad-481d-bcf7-530bd9305291",
+    "weeklyQuantities": {
+      "monday": 1,
+      "tuesday": 1,
+      "wednesday": 1,
+      "thursday": 1,
+      "friday": 1,
+      "saturday": 1,
+      "sunday": 1,
+      "holiday": 1
+    },
+    "notes": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:23:19.893Z",
+    "updatedAt": "2026-08-17T00:23:19.893Z"
+  },
+  {
+    "id": "28eb24fd-f191-4401-bd01-a0c2ffa5f87c",
+    "siteId": "c2c2f51d-a407-46e6-9342-c010612c6dc6",
+    "categoryId": "b7f397ae-05ad-481d-bcf7-530bd9305291",
+    "weeklyQuantities": {
+      "monday": 1,
+      "tuesday": 1,
+      "wednesday": 1,
+      "thursday": 1,
+      "friday": 1,
+      "saturday": 1,
+      "sunday": 1,
+      "holiday": 1
+    },
+    "notes": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:23:28.322Z",
+    "updatedAt": "2026-08-17T00:23:28.322Z"
+  }
+]

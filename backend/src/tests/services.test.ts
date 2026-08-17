@@ -29,17 +29,35 @@ import {
   listStaffRequirements,
   updateStaffRequirement,
 } from "../services/staff-requirements.service";
+import {
+  approveCalendar,
+  getCalendarByWeek,
+  listCalendars,
+  reopenCalendarDraft,
+  saveCalendarDraft,
+} from "../services/calendars.service";
+import {
+  createTask,
+  deleteTask,
+  getTaskById,
+  listTasks,
+  updateTask,
+} from "../services/tasks.service";
 
 const categoriesFile = resolve(process.cwd(), "src", "data", "categories.json");
 const employeesFile = resolve(process.cwd(), "src", "data", "employees.json");
 const sitesFile = resolve(process.cwd(), "src", "data", "sites.json");
 const staffRequirementsFile = resolve(process.cwd(), "src", "data", "staff-requirements.json");
+const calendarsFile = resolve(process.cwd(), "src", "data", "calendars.json");
+const tasksFile = resolve(process.cwd(), "src", "data", "tasks.json");
 
 async function run(): Promise<void> {
   const originalCategories = await readFile(categoriesFile, "utf-8");
   const originalEmployees = await readFile(employeesFile, "utf-8");
   const originalSites = await readFile(sitesFile, "utf-8");
   const originalStaffRequirements = await readFile(staffRequirementsFile, "utf-8");
+  const originalCalendars = await readFile(calendarsFile, "utf-8");
+  const originalTasks = await readFile(tasksFile, "utf-8");
 
   try {
     await resetData();
@@ -47,12 +65,16 @@ async function run(): Promise<void> {
     await testEmployeesService();
     await testSitesService();
     await testStaffRequirementsService();
+    await testCalendarsService();
+    await testTasksService();
     console.log("Service tests passed");
   } finally {
     await writeFile(categoriesFile, originalCategories, "utf-8");
     await writeFile(employeesFile, originalEmployees, "utf-8");
     await writeFile(sitesFile, originalSites, "utf-8");
     await writeFile(staffRequirementsFile, originalStaffRequirements, "utf-8");
+    await writeFile(calendarsFile, originalCalendars, "utf-8");
+    await writeFile(tasksFile, originalTasks, "utf-8");
   }
 }
 
@@ -61,6 +83,8 @@ async function resetData(): Promise<void> {
   await writeFile(employeesFile, "[]\n", "utf-8");
   await writeFile(sitesFile, "[]\n", "utf-8");
   await writeFile(staffRequirementsFile, "[]\n", "utf-8");
+  await writeFile(calendarsFile, "[]\n", "utf-8");
+  await writeFile(tasksFile, "[]\n", "utf-8");
 }
 
 async function testCategoriesService(): Promise<void> {
@@ -103,10 +127,14 @@ async function testCategoriesService(): Promise<void> {
 
 async function testEmployeesService(): Promise<void> {
   const category = await createCategory({ name: "Caja" });
+  const backupCategory = await createCategory({ name: "Planchero" });
+  const site = await createSite({ name: "Burger Centro", location: "Centro" });
 
   const employee = await createEmployee({
     name: "Carlos Gomez",
     categoryId: category.id,
+    preferredSiteId: site.id,
+    backupCategoryIds: [backupCategory.id],
     phone: "3001234567",
     notes: "Disponible fines de semana",
   });
@@ -114,6 +142,8 @@ async function testEmployeesService(): Promise<void> {
   assert.ok(employee.id);
   assert.equal(employee.name, "Carlos Gomez");
   assert.equal(employee.categoryId, category.id);
+  assert.equal(employee.preferredSiteId, site.id);
+  assert.deepEqual(employee.backupCategoryIds, [backupCategory.id]);
 
   const employees = await listEmployees();
   assert.equal(employees.length, 1);
@@ -123,9 +153,11 @@ async function testEmployeesService(): Promise<void> {
 
   const updatedEmployee = await updateEmployee(employee.id, {
     name: "Carlos G.",
+    backupCategoryIds: [],
     active: false,
   });
   assert.equal(updatedEmployee?.name, "Carlos G.");
+  assert.deepEqual(updatedEmployee?.backupCategoryIds, []);
   assert.equal(updatedEmployee?.active, false);
 
   await assert.rejects(
@@ -133,9 +165,16 @@ async function testEmployeesService(): Promise<void> {
     /EMPLOYEE_CATEGORY_NOT_FOUND/,
   );
 
+  await assert.rejects(
+    () => createEmployee({ name: "Sede invalida", categoryId: category.id, preferredSiteId: "sede-inexistente" }),
+    /EMPLOYEE_PREFERRED_SITE_NOT_FOUND/,
+  );
+
   const deleted = await deleteEmployee(employee.id);
   assert.equal(deleted, true);
   assert.equal((await listEmployees()).length, 0);
+
+  await deleteSite(site.id);
 }
 
 async function testSitesService(): Promise<void> {
@@ -233,6 +272,117 @@ async function testStaffRequirementsService(): Promise<void> {
   const deleted = await deleteStaffRequirement(requirement.id);
   assert.equal(deleted, true);
   assert.equal((await listStaffRequirements()).length, 0);
+}
+
+async function testCalendarsService(): Promise<void> {
+  const calendar = await saveCalendarDraft({
+    weekStartDate: "2026-08-17",
+    weekEndDate: "2026-08-23",
+    assignments: [
+      {
+        slotId: "site-monday-category-0",
+        siteId: "site",
+        siteName: "Burger La 16",
+        dayKey: "monday",
+        categoryId: "category",
+        categoryName: "Caja",
+        slotIndex: 1,
+        employeeId: "employee",
+        employeeName: "Ana",
+      },
+    ],
+    tasks: [
+      {
+        id: "task-entry",
+        siteId: "site",
+        siteName: "Burger La 16",
+        dayKey: "monday",
+        taskId: "task",
+        taskName: "Aseo general",
+        assignmentMode: "team",
+        employeeId: "",
+        employeeName: "",
+      },
+    ],
+  });
+
+  assert.ok(calendar.id);
+  assert.equal(calendar.status, "draft");
+  assert.equal(calendar.name, "Semana del 2026-08-17 al 2026-08-23");
+  assert.equal(calendar.assignments.length, 1);
+  assert.equal(calendar.tasks.length, 1);
+
+  const foundByWeek = await getCalendarByWeek("2026-08-17");
+  assert.equal(foundByWeek?.id, calendar.id);
+
+  const updatedDraft = await saveCalendarDraft({
+    weekStartDate: "2026-08-17",
+    weekEndDate: "2026-08-23",
+    notes: "Ajustado",
+    assignments: [],
+    tasks: [],
+  });
+  assert.equal(updatedDraft.id, calendar.id);
+  assert.equal(updatedDraft.notes, "Ajustado");
+  assert.equal(updatedDraft.assignments.length, 0);
+  assert.equal(updatedDraft.tasks.length, 0);
+
+  const approved = await approveCalendar(calendar.id);
+  assert.equal(approved?.status, "approved");
+
+  await assert.rejects(
+    () => saveCalendarDraft({ weekStartDate: "2026-08-17", weekEndDate: "2026-08-23" }),
+    /CALENDAR_APPROVED_LOCKED/,
+  );
+
+  const reopened = await reopenCalendarDraft(calendar.id);
+  assert.equal(reopened?.status, "draft");
+
+  const calendars = await listCalendars();
+  assert.equal(calendars.length, 1);
+}
+
+async function testTasksService(): Promise<void> {
+  const task = await createTask({
+    name: "Aseo general",
+    description: "Limpieza de cierre",
+    assignmentMode: "team",
+  });
+
+  assert.ok(task.id);
+  assert.equal(task.name, "Aseo general");
+  assert.equal(task.description, "Limpieza de cierre");
+  assert.equal(task.assignmentMode, "team");
+  assert.equal(task.active, true);
+
+  const tasks = await listTasks();
+  assert.equal(tasks.length, 1);
+
+  const foundTask = await getTaskById(task.id);
+  assert.equal(foundTask?.id, task.id);
+
+  const updatedTask = await updateTask(task.id, {
+    name: "Picar papa",
+    assignmentMode: "person",
+    active: false,
+  });
+  assert.equal(updatedTask?.name, "Picar papa");
+  assert.equal(updatedTask?.assignmentMode, "person");
+  assert.equal(updatedTask?.active, false);
+
+  await assert.rejects(
+    () => createTask({ name: "Picar papa" }),
+    /TASK_NAME_DUPLICATED/,
+  );
+
+  await assert.rejects(
+    () => createTask({ name: "Tipo invalido", assignmentMode: "otro" as never }),
+    /TASK_ASSIGNMENT_MODE_INVALID/,
+  );
+
+  const deleted = await deleteTask(task.id);
+  assert.equal(deleted, true);
+  assert.equal((await listTasks()).length, 0);
 }
 
 run().catch((error) => {
