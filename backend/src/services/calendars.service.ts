@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { JsonFileRepository } from "../repositories/json-file.repository";
-import type { Calendar, CalendarAssignmentSnapshot, CalendarInput, CalendarTaskSnapshot } from "../types/calendar";
+import type {
+  Calendar,
+  CalendarAssignmentSnapshot,
+  CalendarExceptionSnapshot,
+  CalendarInput,
+  CalendarTaskSnapshot,
+} from "../types/calendar";
 
 const calendarsRepository = new JsonFileRepository<Calendar>("calendars.json");
 
@@ -23,6 +29,7 @@ export async function saveCalendarDraft(input: CalendarInput): Promise<Calendar>
   const weekEndDate = normalizeDate(input.weekEndDate, "CALENDAR_WEEK_END_REQUIRED");
   const assignments = normalizeAssignments(input.assignments);
   const tasks = normalizeTasks(input.tasks);
+  const exceptions = normalizeExceptions(input.exceptions);
   const calendars = await calendarsRepository.findAll();
   const index = calendars.findIndex((calendar) => calendar.weekStartDate === weekStartDate);
   const now = new Date().toISOString();
@@ -39,6 +46,7 @@ export async function saveCalendarDraft(input: CalendarInput): Promise<Calendar>
       weekEndDate,
       assignments,
       tasks,
+      exceptions,
       notes: input.notes?.trim() || "",
       updatedAt: now,
     };
@@ -61,6 +69,7 @@ export async function saveCalendarDraft(input: CalendarInput): Promise<Calendar>
     status: "draft",
     assignments,
     tasks,
+    exceptions,
     notes: input.notes?.trim() || "",
     createdAt: now,
     updatedAt: now,
@@ -133,6 +142,15 @@ function normalizeTasks(tasks: CalendarTaskSnapshot[] | undefined): CalendarTask
   }
 
   return tasks.filter((task) => task.taskId);
+}
+
+function normalizeExceptions(exceptions: CalendarExceptionSnapshot[] | undefined): CalendarExceptionSnapshot[] {
+  if (!exceptions) return [];
+  if (!Array.isArray(exceptions)) {
+    throw new Error("CALENDAR_EXCEPTIONS_INVALID");
+  }
+
+  return exceptions.filter((exception) => exception.alertId && exception.justification?.trim());
 }
 
 function buildCalendarName(weekStartDate: string, weekEndDate: string): string {

@@ -8,6 +8,7 @@ const DAYS = [
   ["saturday", "Sabado"],
   ["sunday", "Domingo"],
 ];
+const WEEKEND_REST_DAYS = ["friday", "saturday", "sunday"];
 
 const state = {
   categories: [],
@@ -19,8 +20,13 @@ const state = {
   currentCalendar: null,
   selectedWeek: null,
   calendarAssignments: {},
+  additionalCalendarSlots: {},
   calendarTasks: {},
+  calendarExceptions: {},
   visibleTaskSections: {},
+  pendingAdditionalSlot: null,
+  pendingExceptionAlert: null,
+  schedulerTab: "schedule",
   editing: {
     categoryId: null,
     employeeId: null,
@@ -39,6 +45,8 @@ const elements = {
   expandSidebarButton: document.getElementById("expandSidebarButton"),
   refreshButton: document.getElementById("refreshButton"),
   schedulerRefreshButton: document.getElementById("schedulerRefreshButton"),
+  schedulerTabs: document.querySelectorAll("[data-scheduler-tab]"),
+  schedulerPanels: document.querySelectorAll("[data-scheduler-panel]"),
   statusMessage: document.getElementById("statusMessage"),
   tabs: document.querySelectorAll("[data-config-tab]"),
   tabPanels: document.querySelectorAll(".config-tab-panel"),
@@ -46,14 +54,28 @@ const elements = {
   calendarWeekSelect: document.getElementById("calendarWeekSelect"),
   calendarStatusBadge: document.getElementById("calendarStatusBadge"),
   calendarMeta: document.getElementById("calendarMeta"),
+  additionalSlotModal: document.getElementById("additionalSlotModal"),
+  additionalSlotForm: document.getElementById("additionalSlotForm"),
+  additionalSlotCategory: document.getElementById("additionalSlotCategory"),
+  additionalSlotCancelButton: document.getElementById("additionalSlotCancelButton"),
+  exceptionModal: document.getElementById("exceptionModal"),
+  exceptionForm: document.getElementById("exceptionForm"),
+  exceptionAlertText: document.getElementById("exceptionAlertText"),
+  exceptionReason: document.getElementById("exceptionReason"),
+  exceptionCancelButton: document.getElementById("exceptionCancelButton"),
   saveDraftButton: document.getElementById("saveDraftButton"),
   approveCalendarButton: document.getElementById("approveCalendarButton"),
   reopenCalendarButton: document.getElementById("reopenCalendarButton"),
   calendarGrid: document.getElementById("calendarGrid"),
   restsGrid: document.getElementById("restsGrid"),
+  teamSummaryTable: document.getElementById("teamSummaryTable"),
+  demandGrid: document.getElementById("demandGrid"),
+  alertsList: document.getElementById("alertsList"),
+  exceptionsList: document.getElementById("exceptionsList"),
   categoryForm: document.getElementById("categoryForm"),
   categoryName: document.getElementById("categoryName"),
   categoryDescription: document.getElementById("categoryDescription"),
+  categoryCalendarPriority: document.getElementById("categoryCalendarPriority"),
   categoryTemporary: document.getElementById("categoryTemporary"),
   categorySubmitButton: document.getElementById("categorySubmitButton"),
   categoryCancelButton: document.getElementById("categoryCancelButton"),
@@ -63,6 +85,7 @@ const elements = {
   employeeCategory: document.getElementById("employeeCategory"),
   employeePreferredSite: document.getElementById("employeePreferredSite"),
   employeeBackupCategories: document.getElementById("employeeBackupCategories"),
+  employeeTeamLeader: document.getElementById("employeeTeamLeader"),
   employeePhone: document.getElementById("employeePhone"),
   employeeNotes: document.getElementById("employeeNotes"),
   employeeActive: document.getElementById("employeeActive"),
@@ -115,6 +138,10 @@ elements.requirementCancelButton.addEventListener("click", resetRequirementForm)
 elements.taskCancelButton.addEventListener("click", resetTaskForm);
 elements.employeeCategory.addEventListener("change", () => renderEmployeeBackupOptions());
 elements.clearCalendarButton.addEventListener("click", clearCalendarAssignments);
+elements.additionalSlotForm.addEventListener("submit", saveAdditionalCalendarSlot);
+elements.additionalSlotCancelButton.addEventListener("click", closeAdditionalSlotModal);
+elements.exceptionForm.addEventListener("submit", saveCalendarException);
+elements.exceptionCancelButton.addEventListener("click", closeExceptionModal);
 elements.calendarWeekSelect.addEventListener("change", selectCalendarWeek);
 elements.saveDraftButton.addEventListener("click", saveCalendarDraft);
 elements.approveCalendarButton.addEventListener("click", approveCurrentCalendar);
@@ -122,6 +149,7 @@ elements.reopenCalendarButton.addEventListener("click", reopenCurrentCalendar);
 elements.collapseSidebarButton.addEventListener("click", () => toggleSchedulerSidebar(true));
 elements.expandSidebarButton.addEventListener("click", () => toggleSchedulerSidebar(false));
 elements.tabs.forEach((tab) => tab.addEventListener("click", () => switchTab(tab.dataset.configTab)));
+elements.schedulerTabs.forEach((tab) => tab.addEventListener("click", () => switchSchedulerTab(tab.dataset.schedulerTab)));
 window.addEventListener("hashchange", renderRoute);
 
 renderRoute();
@@ -240,6 +268,7 @@ async function saveCategory(event) {
       body: JSON.stringify({
         name: elements.categoryName.value,
         description: elements.categoryDescription.value,
+        calendarPriority: Number(elements.categoryCalendarPriority.value),
         temporary: elements.categoryTemporary.checked,
       }),
     });
@@ -263,7 +292,8 @@ async function saveEmployee(event) {
         name: elements.employeeName.value,
         categoryId: elements.employeeCategory.value,
         preferredSiteId: elements.employeePreferredSite.value,
-        backupCategoryIds: getSelectedValues(elements.employeeBackupCategories),
+        backupCategoryIds: getSelectedCheckboxValues(elements.employeeBackupCategories),
+        teamLeader: elements.employeeTeamLeader.checked,
         phone: elements.employeePhone.value,
         notes: elements.employeeNotes.value,
         active: elements.employeeActive.checked,
@@ -344,10 +374,51 @@ async function request(path, options = {}) {
   return payload;
 }
 
+async function downloadSiteCalendar(siteId) {
+  if (!window.htmlToImage) {
+    showStatus("No fue posible cargar la herramienta de descarga de imagen.", "error");
+    return;
+  }
+
+  const site = state.sites.find((item) => item.id === siteId);
+  const siteNode = document.querySelector(`[data-site-calendar="${siteId}"]`);
+  if (!site || !siteNode) return;
+
+  siteNode.classList.add("is-exporting");
+
+  try {
+    const dataUrl = await window.htmlToImage.toPng(siteNode, {
+      backgroundColor: "#ffffff",
+      cacheBust: true,
+      pixelRatio: 2,
+      width: siteNode.scrollWidth,
+      height: siteNode.scrollHeight,
+      style: {
+        transform: "none",
+        width: `${siteNode.scrollWidth}px`,
+      },
+    });
+
+    const link = document.createElement("a");
+    link.download = `${slugifyFileName(site.name)}-${state.selectedWeek?.start || "semana"}.png`;
+    link.href = dataUrl;
+    link.click();
+    showStatus("Imagen de la sede descargada correctamente.", "success");
+  } catch {
+    showStatus("No fue posible descargar la imagen de la sede.", "error");
+  } finally {
+    siteNode.classList.remove("is-exporting");
+  }
+}
+
 function render() {
   renderWeekSelector();
   renderCalendarHeader();
   renderCalendar();
+  renderTeamSummary();
+  renderDemandSummary();
+  renderCalendarAlerts();
+  renderSchedulerTabs();
   renderCategories();
   renderEmployees();
   renderSites();
@@ -402,6 +473,9 @@ function renderCalendar() {
       <p class="empty">Crea sedes, categorias y requerimientos para ver el calendario.</p>
     `;
     elements.restsGrid.innerHTML = "";
+    renderTeamSummary();
+    renderDemandSummary();
+    renderCalendarAlerts();
     return;
   }
 
@@ -412,7 +486,16 @@ function renderCalendar() {
     select.addEventListener("change", () => {
       state.calendarAssignments[select.dataset.calendarSlot] = select.value;
       renderCalendar();
+      renderTeamSummary();
     });
+  });
+
+  elements.calendarGrid.querySelectorAll("[data-add-additional-slot]").forEach((button) => {
+    button.addEventListener("click", () => openAdditionalSlotModal(button.dataset.addAdditionalSlot, button.dataset.dayKey));
+  });
+
+  elements.calendarGrid.querySelectorAll("[data-delete-additional-slot]").forEach((button) => {
+    button.addEventListener("click", () => deleteAdditionalCalendarSlot(button.dataset.deleteAdditionalSlot));
   });
 
   elements.calendarGrid.querySelectorAll("[data-toggle-site-tasks]").forEach((button) => {
@@ -421,6 +504,10 @@ function renderCalendar() {
       state.visibleTaskSections[siteId] = !state.visibleTaskSections[siteId];
       renderCalendar();
     });
+  });
+
+  elements.calendarGrid.querySelectorAll("[data-download-site]").forEach((button) => {
+    button.addEventListener("click", () => downloadSiteCalendar(button.dataset.downloadSite));
   });
 
   elements.calendarGrid.querySelectorAll("[data-add-calendar-task]").forEach((button) => {
@@ -438,21 +525,22 @@ function renderCalendar() {
   elements.calendarGrid.querySelectorAll("[data-delete-calendar-task]").forEach((button) => {
     button.addEventListener("click", () => deleteCalendarTask(button.dataset.deleteCalendarTask));
   });
+
+  renderCalendarAlerts();
+  renderTeamSummary();
 }
 
 function renderSiteCalendar(site) {
   const siteRequirements = state.requirements.filter((requirement) => requirement.siteId === site.id);
-  const totalWeeklySlots = DAYS.reduce((sum, [dayKey]) => {
-    return sum + siteRequirements.reduce((daySum, requirement) => {
-      return daySum + Number(requirement.weeklyQuantities?.[dayKey] || 0);
-    }, 0);
-  }, 0);
+  const dayStats = getSiteDayStats(site.id, siteRequirements);
+  const maxDailySlots = Math.max(...dayStats.map((day) => day.total), 0);
+  const totalWeeklySlots = dayStats.reduce((sum, day) => sum + day.total, 0);
   const filledWeeklySlots = getSiteFilledSlots(site.id);
   const hasTaskSection = Boolean(state.visibleTaskSections[site.id]);
   const isApproved = state.currentCalendar?.status === "approved";
 
   return `
-    <section class="calendar-site">
+    <section class="calendar-site" data-site-calendar="${site.id}">
       <div class="calendar-site-header">
         <div>
           <h3>${escapeHtml(site.name)}</h3>
@@ -460,6 +548,7 @@ function renderSiteCalendar(site) {
         </div>
         <div class="calendar-site-actions">
           <span class="pill">${escapeHtml(site.location || "Sin ubicacion")}</span>
+          ${isApproved ? `<button class="secondary compact-button export-hidden" type="button" data-download-site="${site.id}" title="Descargar imagen">Descargar PNG</button>` : ""}
           <button class="secondary compact-button" type="button" data-toggle-site-tasks="${site.id}" ${isApproved ? "disabled" : ""}>
             ${hasTaskSection ? "Ocultar tareas" : "Agregar tareas"}
           </button>
@@ -467,34 +556,59 @@ function renderSiteCalendar(site) {
       </div>
       <div class="calendar-table">
         <div class="calendar-head">
-          ${DAYS.map(([, label]) => `<div>${label}</div>`).join("")}
+          ${dayStats.map(({ dayKey, label, filled, total }) => `
+            <div class="calendar-head-day">
+              <span>${label}</span>
+              <span class="day-count">${filled}/${total}</span>
+              <button class="tiny-button" type="button" data-add-additional-slot="${site.id}" data-day-key="${dayKey}" title="Agregar colaborador" ${isApproved ? "disabled" : ""}>+</button>
+            </div>
+          `).join("")}
         </div>
         <div class="calendar-row">
-          ${DAYS.map(([dayKey, label]) => renderDayCalendarCell(site, siteRequirements, dayKey, label)).join("")}
+          ${DAYS.map(([dayKey]) => renderDayCalendarCell(site, siteRequirements, dayKey, maxDailySlots)).join("")}
         </div>
       </div>
     </section>
   `;
 }
 
-function renderDayCalendarCell(site, siteRequirements, dayKey, dayLabel) {
-  const slots = buildDaySlots(site.id, siteRequirements, dayKey);
-  const filled = slots.filter((slot) => state.calendarAssignments[slot.id]).length;
+function renderDayCalendarCell(site, siteRequirements, dayKey, maxDailySlots) {
+  const slots = getDaySlots(site.id, siteRequirements, dayKey);
+  const hasAssignmentAlert = slots.some((slot) => getCalendarSlotAlerts(slot).length);
 
   return `
-    <div class="calendar-day">
-      <div class="calendar-day-summary">
-        <strong>${dayLabel}</strong>
-        <span>${filled}/${slots.length}</span>
+    <div class="calendar-day ${hasAssignmentAlert ? "has-alert" : ""}" style="--staff-min-height: ${Math.max(maxDailySlots, 1) * 39}px;">
+      <div class="calendar-staff-list">
+        ${slots.length ? slots.map(renderCalendarSlot).join("") : `<p class="empty">Sin requerimientos</p>`}
       </div>
-      ${slots.length ? slots.map(renderCalendarSlot).join("") : `<p class="empty">Sin requerimientos</p>`}
       ${state.visibleTaskSections[site.id] ? renderDayTasks(site.id, dayKey) : ""}
     </div>
   `;
 }
 
+function getSiteDayStats(siteId, siteRequirements) {
+  return DAYS.map(([dayKey, label]) => {
+    const slots = getDaySlots(siteId, siteRequirements, dayKey);
+    const filled = slots.filter((slot) => state.calendarAssignments[slot.id]).length;
+
+    return {
+      dayKey,
+      label,
+      total: slots.length,
+      filled,
+    };
+  });
+}
+
+function getDaySlots(siteId, siteRequirements, dayKey) {
+  return [
+    ...buildDaySlots(siteId, siteRequirements, dayKey),
+    ...getAdditionalCalendarSlots(siteId, dayKey),
+  ];
+}
+
 function buildDaySlots(siteId, siteRequirements, dayKey) {
-  return siteRequirements.flatMap((requirement) => {
+  return [...siteRequirements].sort(compareRequirementsByCategoryPriority).flatMap((requirement) => {
     const category = state.categories.find((item) => item.id === requirement.categoryId);
     const quantity = Number(requirement.weeklyQuantities?.[dayKey] || 0);
 
@@ -505,6 +619,7 @@ function buildDaySlots(siteId, siteRequirements, dayKey) {
       categoryId: requirement.categoryId,
       categoryName: category?.name || "Categoria no encontrada",
       slotIndex: index + 1,
+      isAdditional: false,
     }));
   });
 }
@@ -513,11 +628,20 @@ function renderCalendarSlot(slot) {
   const selectedEmployeeId = state.calendarAssignments[slot.id] || "";
   const activeEmployees = state.employees.filter((employee) => employee.active !== false);
   const isApproved = state.currentCalendar?.status === "approved";
+  const alerts = getCalendarSlotAlerts(slot);
+  const hasAssignmentAlert = alerts.length > 0;
+  const alertMessage = alerts.join(" ");
+  const categoryLabel = slot.isAdditional
+    ? `${escapeHtml(slot.categoryName)} #${slot.slotIndex} (adicional)`
+    : `${escapeHtml(slot.categoryName)} #${slot.slotIndex}`;
 
   return `
-    <label class="calendar-slot">
-      ${escapeHtml(slot.categoryName)} ${slot.slotIndex}
-      <select data-calendar-slot="${slot.id}" ${isApproved ? "disabled" : ""}>
+    <label class="calendar-slot ${hasAssignmentAlert ? "has-alert" : ""}">
+      <span class="slot-title">
+        ${categoryLabel}
+        ${slot.isAdditional ? `<button class="slot-remove" type="button" data-delete-additional-slot="${slot.id}" ${isApproved ? "disabled" : ""}>x</button>` : ""}
+      </span>
+      <select class="${hasAssignmentAlert ? "has-alert" : ""}" data-calendar-slot="${slot.id}" title="${escapeHtml(alertMessage)}" ${isApproved ? "disabled" : ""}>
         <option value="">Sin asignar</option>
         ${activeEmployees.map((employee) => `
           <option value="${employee.id}" ${employee.id === selectedEmployeeId ? "selected" : ""}>
@@ -598,6 +722,8 @@ function renderCalendarTaskEntry(entry) {
 }
 
 function renderRestsSummary() {
+  const restDayCounts = getRestDayCountsByEmployeeId();
+
   return `
     <section class="calendar-site rests-card">
       <div class="calendar-site-header">
@@ -614,7 +740,7 @@ function renderRestsSummary() {
           ${DAYS.map(([dayKey]) => `
             <div class="calendar-day">
               <div class="rest-list">
-                ${getRestingEmployees(dayKey).map((employee) => `<span class="pill">${escapeHtml(employee.name)}</span>`).join("") || `<span class="empty">Sin descansos</span>`}
+                ${getRestingEmployees(dayKey).map((employee) => renderRestPill(employee, restDayCounts, dayKey)).join("") || `<span class="empty">Sin descansos</span>`}
               </div>
             </div>
           `).join("")}
@@ -631,7 +757,69 @@ function getRestingEmployees(dayKey) {
       .map(([, employeeId]) => employeeId),
   );
 
-  return state.employees.filter((employee) => !assignedEmployeeIds.has(employee.id));
+  return state.employees.filter((employee) => employee.active !== false && !assignedEmployeeIds.has(employee.id));
+}
+
+function renderRestPill(employee, restDayCounts, dayKey) {
+  const category = state.categories.find((item) => item.id === employee.categoryId);
+  const validatesRest = !category?.temporary;
+  const restAlerts = [];
+
+  if (validatesRest && Number(restDayCounts[employee.id] || 0) > 1) {
+    restAlerts.push("Descansa mas de una vez en la semana.");
+  }
+
+  if (validatesRest && WEEKEND_REST_DAYS.includes(dayKey)) {
+    restAlerts.push("No debe descansar viernes, sabado o domingo.");
+  }
+
+  return `<span class="pill ${restAlerts.length ? "alert-pill" : ""}" title="${escapeHtml(restAlerts.join(" "))}">${escapeHtml(employee.name)}</span>`;
+}
+
+function getRestDayCountsByEmployeeId() {
+  return DAYS.reduce((counts, [dayKey]) => {
+    getRestingEmployees(dayKey).forEach((employee) => {
+      counts[employee.id] = Number(counts[employee.id] || 0) + 1;
+    });
+    return counts;
+  }, {});
+}
+
+function hasDuplicateAssignment(slot) {
+  const employeeId = state.calendarAssignments[slot.id];
+  if (!employeeId) return false;
+
+  return getEmployeeAssignmentCountForDay(employeeId, slot.dayKey) > 1;
+}
+
+function getCalendarSlotAlerts(slot) {
+  const employeeId = state.calendarAssignments[slot.id];
+  if (!employeeId) return [];
+
+  const employee = state.employees.find((item) => item.id === employeeId);
+  const alerts = [];
+
+  if (hasDuplicateAssignment(slot)) {
+    alerts.push("Empleado asignado mas de una vez este dia.");
+  }
+
+  if (employee && !canEmployeeCoverCategory(employee, slot.categoryId)) {
+    alerts.push("Categoria no configurada para este empleado.");
+  }
+
+  return alerts;
+}
+
+function canEmployeeCoverCategory(employee, categoryId) {
+  return employee.categoryId === categoryId || (employee.backupCategoryIds || []).includes(categoryId);
+}
+
+function getEmployeeAssignmentCountForDay(employeeId, dayKey) {
+  return Object.entries(state.calendarAssignments)
+    .filter(([slotId, assignedEmployeeId]) => {
+      return assignedEmployeeId === employeeId && slotId.includes(`-${dayKey}-`);
+    })
+    .length;
 }
 
 function getSiteFilledSlots(siteId) {
@@ -640,11 +828,375 @@ function getSiteFilledSlots(siteId) {
     .length;
 }
 
+function getCalendarAlerts() {
+  return [
+    ...getRestAlerts(),
+    ...getDuplicateAssignmentAlerts(),
+    ...getCategoryMismatchAlerts(),
+  ];
+}
+
+function getBlockingCalendarAlerts() {
+  return getCalendarAlerts().filter((alert) => !state.calendarExceptions[alert.id]);
+}
+
+function getRestAlerts() {
+  return getEmployeesForRestValidation().flatMap((employee) => {
+    const restDays = DAYS.filter(([dayKey]) => isEmployeeResting(employee.id, dayKey));
+    const alerts = [];
+
+    if (restDays.length > 1) {
+      alerts.push({
+        id: `rest-many:${employee.id}`,
+        type: "rest-many",
+        title: `${employee.name} tiene ${restDays.length} descansos`,
+        detail: `Tiene descanso el ${formatDayList(restDays)}.`,
+      });
+    }
+
+    if (restDays.length === 0) {
+      alerts.push({
+        id: `rest-zero:${employee.id}`,
+        type: "rest-zero",
+        title: `${employee.name} no tiene descanso`,
+        detail: "No tiene ningun dia de descanso asignado en la semana.",
+      });
+    }
+
+    const weekendRestDays = restDays.filter(([dayKey]) => WEEKEND_REST_DAYS.includes(dayKey));
+    if (weekendRestDays.length) {
+      alerts.push({
+        id: `rest-weekend:${employee.id}`,
+        type: "rest-weekend",
+        title: `${employee.name} descansa en dias no permitidos`,
+        detail: `Tiene descanso el ${formatDayList(weekendRestDays)}. No debe haber descansos viernes, sabados ni domingos.`,
+      });
+    }
+
+    return alerts;
+  });
+}
+
+function getDuplicateAssignmentAlerts() {
+  const groupedAssignments = getAssignedSlotDetails().reduce((groups, detail) => {
+    const key = `${detail.employeeId}::${detail.dayKey}`;
+    groups[key] = [...(groups[key] || []), detail];
+    return groups;
+  }, {});
+
+  return Object.values(groupedAssignments).flatMap((details) => {
+    if (details.length <= 1) return [];
+
+    const firstDetail = details[0];
+    return {
+      id: `duplicate-assignment:${firstDetail.employeeId}:${firstDetail.dayKey}`,
+      type: "duplicate-assignment",
+      title: `${firstDetail.employeeName} esta asignado ${details.length} veces el ${getDayLabel(firstDetail.dayKey)}`,
+      detail: details
+        .map((detail) => `${detail.siteName}: ${detail.categoryName} #${detail.slotIndex}`)
+        .join(". "),
+    };
+  });
+}
+
+function getCategoryMismatchAlerts() {
+  return getAssignedSlotDetails().flatMap((detail) => {
+    const employee = state.employees.find((item) => item.id === detail.employeeId);
+    if (!employee || canEmployeeCoverCategory(employee, detail.categoryId)) return [];
+
+    const employeeCategory = state.categories.find((category) => category.id === employee.categoryId);
+    const backupCategories = (employee.backupCategoryIds || [])
+      .map((categoryId) => state.categories.find((category) => category.id === categoryId)?.name)
+      .filter(Boolean)
+      .join(", ");
+
+    return {
+      id: `category-mismatch:${detail.slotId}:${detail.employeeId}`,
+      type: "category-mismatch",
+      title: `${detail.employeeName} no tiene configurado el cargo ${detail.categoryName}`,
+      detail: `${getDayLabel(detail.dayKey)} en ${detail.siteName}. Categoria principal: ${employeeCategory?.name || "sin categoria"}. Reemplazos: ${backupCategories || "sin reemplazos"}.`,
+    };
+  });
+}
+
+function getAssignedSlotDetails() {
+  return state.sites.flatMap((site) => {
+    const siteRequirements = state.requirements.filter((requirement) => requirement.siteId === site.id);
+    return DAYS.flatMap(([dayKey]) => {
+      return getDaySlots(site.id, siteRequirements, dayKey).flatMap((slot) => {
+        const employeeId = state.calendarAssignments[slot.id];
+        const employee = state.employees.find((item) => item.id === employeeId);
+        if (!employeeId || !employee) return [];
+
+        return {
+          slotId: slot.id,
+          siteId: site.id,
+          siteName: site.name,
+          dayKey,
+          categoryId: slot.categoryId,
+          categoryName: slot.categoryName,
+          slotIndex: slot.slotIndex,
+          employeeId,
+          employeeName: employee.name,
+        };
+      });
+    });
+  });
+}
+
+function getEmployeesForRestValidation() {
+  return state.employees.filter((employee) => {
+    if (employee.active === false) return false;
+    const category = state.categories.find((item) => item.id === employee.categoryId);
+    return !category?.temporary;
+  });
+}
+
+function isEmployeeResting(employeeId, dayKey) {
+  return !Object.entries(state.calendarAssignments).some(([slotId, assignedEmployeeId]) => {
+    return assignedEmployeeId === employeeId && slotId.includes(`-${dayKey}-`);
+  });
+}
+
+function formatDayList(dayEntries) {
+  const labels = dayEntries.map(([, label]) => label.toLowerCase());
+  if (labels.length <= 1) return labels[0] || "";
+  return `${labels.slice(0, -1).join(", ")} y ${labels.at(-1)}`;
+}
+
+function getDayLabel(dayKey) {
+  return DAYS.find(([key]) => key === dayKey)?.[1] || dayKey;
+}
+
+function renderCalendarAlerts() {
+  if (!elements.alertsList || !elements.exceptionsList) return;
+
+  const alerts = getCalendarAlerts();
+  const pendingAlerts = alerts.filter((alert) => !state.calendarExceptions[alert.id]);
+  const exceptions = Object.values(state.calendarExceptions);
+
+  elements.alertsList.innerHTML = pendingAlerts.length
+    ? pendingAlerts.map((alert) => renderAlertCard(alert, "alert")).join("")
+    : `<p class="empty">No hay alertas pendientes.</p>`;
+
+  elements.exceptionsList.innerHTML = exceptions.length
+    ? exceptions.map((exception) => renderAlertCard(exception, "exception")).join("")
+    : `<p class="empty">No hay excepciones registradas.</p>`;
+
+  elements.alertsList.querySelectorAll("[data-omit-alert]").forEach((button) => {
+    button.addEventListener("click", () => openExceptionModal(button.dataset.omitAlert));
+  });
+}
+
+function renderAlertCard(alert, variant) {
+  const isException = variant === "exception";
+  return `
+    <article class="alert-card ${isException ? "is-exception" : ""}">
+      <div>
+        <h4>${escapeHtml(alert.title)}</h4>
+        <p>${escapeHtml(alert.detail)}</p>
+        ${isException ? `<p class="exception-reason">Justificacion: ${escapeHtml(alert.justification)}</p>` : ""}
+      </div>
+      ${isException ? "" : `<button class="secondary" type="button" data-omit-alert="${alert.id}">Omitir con justificacion</button>`}
+    </article>
+  `;
+}
+
+function openExceptionModal(alertId) {
+  const alert = getCalendarAlerts().find((item) => item.id === alertId);
+  if (!alert) return;
+
+  state.pendingExceptionAlert = alert;
+  elements.exceptionAlertText.textContent = `${alert.title}. ${alert.detail}`;
+  elements.exceptionReason.value = "";
+  elements.exceptionModal.hidden = false;
+  elements.exceptionReason.focus();
+}
+
+function closeExceptionModal() {
+  state.pendingExceptionAlert = null;
+  elements.exceptionModal.hidden = true;
+  elements.exceptionForm.reset();
+}
+
+function saveCalendarException(event) {
+  event.preventDefault();
+  const alert = state.pendingExceptionAlert;
+  const justification = elements.exceptionReason.value.trim();
+
+  if (!alert || !justification) return;
+
+  state.calendarExceptions[alert.id] = {
+    ...alert,
+    alertId: alert.id,
+    justification,
+    createdAt: new Date().toISOString(),
+  };
+
+  closeExceptionModal();
+  renderCalendarAlerts();
+  showStatus("Excepcion registrada. Guarda el borrador para conservarla.", "success");
+}
+
+function buildCalendarExceptionSnapshots() {
+  return Object.values(state.calendarExceptions).map((exception) => ({
+    alertId: exception.alertId || exception.id,
+    type: exception.type,
+    title: exception.title,
+    detail: exception.detail,
+    justification: exception.justification,
+    createdAt: exception.createdAt || new Date().toISOString(),
+  }));
+}
+
+function exceptionsFromCalendar(calendar) {
+  return Object.fromEntries(
+    (calendar.exceptions || [])
+      .filter((exception) => exception.alertId && exception.justification)
+      .map((exception) => [exception.alertId, exception]),
+  );
+}
+
+function renderTeamSummary() {
+  if (!elements.teamSummaryTable) return;
+
+  const rows = getTeamSummaryRows();
+  elements.teamSummaryTable.innerHTML = rows.length
+    ? rows.map(renderTeamSummaryRow).join("")
+    : `<tr><td colspan="5" class="empty">Todavia no hay colaboradores asignados esta semana.</td></tr>`;
+
+  elements.teamSummaryTable.querySelectorAll("[data-toggle-team-row]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const detailRow = elements.teamSummaryTable.querySelector(`[data-team-detail="${button.dataset.toggleTeamRow}"]`);
+      if (!detailRow) return;
+
+      detailRow.hidden = !detailRow.hidden;
+      button.textContent = detailRow.hidden ? "Ver" : "Ocultar";
+    });
+  });
+}
+
+function getTeamSummaryRows() {
+  const assignmentDetails = getAssignedSlotDetails();
+  const involvedEmployeeIds = [...new Set(assignmentDetails.map((detail) => detail.employeeId))];
+
+  return involvedEmployeeIds
+    .map((employeeId) => {
+      const employee = state.employees.find((item) => item.id === employeeId && item.active !== false);
+      if (!employee) return null;
+
+      const category = state.categories.find((item) => item.id === employee.categoryId);
+      const employeeAssignments = assignmentDetails.filter((detail) => detail.employeeId === employee.id);
+      const assignmentDays = [...new Set(employeeAssignments.map((detail) => detail.dayKey))];
+      const restDays = DAYS.filter(([dayKey]) => !assignmentDays.includes(dayKey));
+
+      return {
+        employee,
+        category,
+        typeLabel: category?.temporary ? "temporal" : "fijo",
+        restText: restDays.length ? formatDayList(restDays) : "Sin descanso",
+        assignmentDaysCount: assignmentDays.length,
+        assignmentsText: employeeAssignments
+          .map((detail) => `${getDayLabel(detail.dayKey)}: ${detail.siteName} · ${detail.categoryName} #${detail.slotIndex}`)
+          .join(" | "),
+      };
+    })
+    .filter(Boolean)
+    .sort((first, second) => first.employee.name.localeCompare(second.employee.name, "es"));
+}
+
+function renderTeamSummaryRow(row) {
+  const employee = row.employee;
+  const preferredSite = state.sites.find((item) => item.id === employee.preferredSiteId);
+  const backupCategories = (employee.backupCategoryIds || [])
+    .map((categoryId) => state.categories.find((item) => item.id === categoryId)?.name)
+    .filter(Boolean)
+    .join(", ");
+
+  return `
+    <tr>
+      <td>${escapeHtml(employee.name)}</td>
+      <td><span class="pill">${escapeHtml(row.typeLabel)}</span></td>
+      <td>${escapeHtml(row.restText)}</td>
+      <td>${row.assignmentDaysCount} dias</td>
+      <td><button class="secondary compact-button" type="button" data-toggle-team-row="${employee.id}">Ver</button></td>
+    </tr>
+    <tr class="detail-row" data-team-detail="${employee.id}" hidden>
+      <td colspan="5">
+        <div class="team-detail-grid">
+          <p><strong>Categoria:</strong> ${escapeHtml(row.category?.name || "Categoria no encontrada")}</p>
+          <p><strong>Sede habitual:</strong> ${escapeHtml(preferredSite?.name || "Sin sede habitual")}</p>
+          <p><strong>Puede reemplazar:</strong> ${escapeHtml(backupCategories || "Sin reemplazos configurados")}</p>
+          <p><strong>Telefono:</strong> ${escapeHtml(employee.phone || "Sin telefono")}</p>
+          <p><strong>Lider:</strong> ${employee.teamLeader ? "Si" : "No"}</p>
+          <p><strong>Estado:</strong> ${employee.active === false ? "Inactivo" : "Activo"}</p>
+          <p class="team-detail-wide"><strong>Asignaciones:</strong> ${escapeHtml(row.assignmentsText || "Sin asignaciones")}</p>
+          <p class="team-detail-wide"><strong>Notas:</strong> ${escapeHtml(employee.notes || "Sin notas")}</p>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function renderDemandSummary() {
+  if (!elements.demandGrid) return;
+
+  elements.demandGrid.innerHTML = state.sites.length
+    ? state.sites.map(renderDemandSiteCard).join("")
+    : `<p class="empty">Crea sedes para ver la demanda configurada.</p>`;
+}
+
+function renderDemandSiteCard(site) {
+  const siteRequirements = state.requirements
+    .filter((requirement) => requirement.siteId === site.id && requirement.active !== false)
+    .sort(compareRequirementsByCategoryPriority);
+
+  return `
+    <section class="demand-card">
+      <div class="calendar-site-header">
+        <div>
+          <h3>${escapeHtml(site.name)}</h3>
+          <p>${escapeHtml(site.location || "Sin ubicacion")}</p>
+        </div>
+      </div>
+      <div class="demand-days">
+        ${DAYS.map(([dayKey, label]) => renderDemandDay(dayKey, label, siteRequirements)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderDemandDay(dayKey, label, siteRequirements) {
+  const demandItems = siteRequirements.flatMap((requirement) => {
+    const quantity = Number(requirement.weeklyQuantities?.[dayKey] || 0);
+    if (quantity <= 0) return [];
+
+    const category = state.categories.find((item) => item.id === requirement.categoryId);
+    return {
+      categoryName: category?.name || "Categoria no encontrada",
+      quantity,
+    };
+  });
+
+  return `
+    <article class="demand-day">
+      <h4>${label}</h4>
+      <div class="demand-chip-list">
+        ${demandItems.length
+          ? demandItems.map((item) => `<span class="pill">${escapeHtml(item.categoryName)}: ${item.quantity}</span>`).join("")
+          : `<span class="empty">Sin requerimientos</span>`}
+      </div>
+    </article>
+  `;
+}
+
 function clearCalendarAssignments() {
   if (state.currentCalendar?.status === "approved") return;
 
   state.calendarAssignments = {};
+  state.additionalCalendarSlots = {};
   state.calendarTasks = {};
+  state.calendarExceptions = {};
   state.visibleTaskSections = {};
   renderCalendar();
   showStatus("Asignaciones del calendario limpiadas.", "success");
@@ -662,8 +1214,10 @@ function selectCalendarWeek() {
 function syncCurrentCalendarFromWeek() {
   const calendar = findCalendarByWeek(state.selectedWeek?.start);
   state.currentCalendar = calendar || null;
+  state.additionalCalendarSlots = calendar ? additionalSlotsFromCalendar(calendar) : {};
   state.calendarAssignments = calendar ? assignmentsFromCalendar(calendar) : {};
   state.calendarTasks = calendar ? tasksFromCalendar(calendar) : {};
+  state.calendarExceptions = calendar ? exceptionsFromCalendar(calendar) : {};
   state.visibleTaskSections = calendar ? visibleTaskSectionsFromTasks(calendar.tasks || []) : {};
 }
 
@@ -694,7 +1248,20 @@ async function approveCurrentCalendar() {
     return;
   }
 
+  const pendingAlerts = getBlockingCalendarAlerts();
+  if (pendingAlerts.length) {
+    showStatus("Hay alertas pendientes. Corrigelas o agregalas como excepcion antes de aprobar.", "error");
+    switchSchedulerTab("alerts");
+    return;
+  }
+
   try {
+    const draftResponse = await request("/calendars", {
+      method: "POST",
+      body: JSON.stringify(buildCalendarPayload()),
+    });
+    state.currentCalendar = draftResponse.data;
+
     const response = await request(`/calendars/${state.currentCalendar.id}/approve`, { method: "PATCH" });
     state.currentCalendar = response.data;
     await loadData();
@@ -728,13 +1295,14 @@ function buildCalendarPayload() {
     weekEndDate: week.end,
     assignments: buildAssignmentSnapshots(),
     tasks: buildCalendarTaskSnapshots(),
+    exceptions: buildCalendarExceptionSnapshots(),
   };
 }
 
 function buildAssignmentSnapshots() {
   const slots = state.sites.flatMap((site) => {
     const siteRequirements = state.requirements.filter((requirement) => requirement.siteId === site.id);
-    return DAYS.flatMap(([dayKey]) => buildDaySlots(site.id, siteRequirements, dayKey));
+    return DAYS.flatMap(([dayKey]) => getDaySlots(site.id, siteRequirements, dayKey));
   });
 
   return slots.flatMap((slot) => {
@@ -752,6 +1320,7 @@ function buildAssignmentSnapshots() {
       categoryId: slot.categoryId,
       categoryName: slot.categoryName,
       slotIndex: slot.slotIndex,
+      isAdditional: slot.isAdditional,
       employeeId,
       employeeName: employee.name,
     };
@@ -762,6 +1331,133 @@ function assignmentsFromCalendar(calendar) {
   return Object.fromEntries(
     (calendar.assignments || []).map((assignment) => [assignment.slotId, assignment.employeeId]),
   );
+}
+
+function openAdditionalSlotModal(siteId, dayKey) {
+  if (state.currentCalendar?.status === "approved") return;
+  if (!state.categories.length) {
+    showStatus("Crea categorias antes de agregar personal adicional.", "error");
+    return;
+  }
+
+  state.pendingAdditionalSlot = { siteId, dayKey };
+  elements.additionalSlotCategory.innerHTML = state.categories.map((category) => `
+    <option value="${category.id}">${escapeHtml(category.name)}</option>
+  `).join("");
+  elements.additionalSlotModal.hidden = false;
+  elements.additionalSlotCategory.focus();
+}
+
+function closeAdditionalSlotModal() {
+  state.pendingAdditionalSlot = null;
+  elements.additionalSlotModal.hidden = true;
+  elements.additionalSlotForm.reset();
+}
+
+function saveAdditionalCalendarSlot(event) {
+  event.preventDefault();
+  if (!state.pendingAdditionalSlot) return;
+
+  const { siteId, dayKey } = state.pendingAdditionalSlot;
+  const category = state.categories.find((item) => item.id === elements.additionalSlotCategory.value);
+  if (!category) return;
+
+  const key = getCalendarTaskKey(siteId, dayKey);
+  const entry = {
+    id: createAdditionalSlotId(siteId, dayKey),
+    siteId,
+    dayKey,
+    categoryId: category.id,
+    categoryName: category.name,
+  };
+
+  state.additionalCalendarSlots[key] = [...(state.additionalCalendarSlots[key] || []), entry];
+  closeAdditionalSlotModal();
+  renderCalendar();
+}
+
+function updateAdditionalCalendarSlot(slotId, changes) {
+  if (state.currentCalendar?.status === "approved") return;
+
+  state.additionalCalendarSlots = Object.fromEntries(
+    Object.entries(state.additionalCalendarSlots).map(([key, slots]) => [
+      key,
+      slots.map((slot) => {
+        if (slot.id !== slotId) return slot;
+        const category = state.categories.find((item) => item.id === changes.categoryId);
+        return {
+          ...slot,
+          ...changes,
+          categoryName: category?.name || slot.categoryName,
+        };
+      }),
+    ]),
+  );
+  renderCalendar();
+}
+
+function deleteAdditionalCalendarSlot(slotId) {
+  if (state.currentCalendar?.status === "approved") return;
+
+  delete state.calendarAssignments[slotId];
+  state.additionalCalendarSlots = Object.fromEntries(
+    Object.entries(state.additionalCalendarSlots).map(([key, slots]) => [
+      key,
+      slots.filter((slot) => slot.id !== slotId),
+    ]),
+  );
+  renderCalendar();
+}
+
+function getAdditionalCalendarSlots(siteId, dayKey) {
+  const entries = state.additionalCalendarSlots[getCalendarTaskKey(siteId, dayKey)] || [];
+  const siteRequirements = state.requirements.filter((requirement) => requirement.siteId === siteId);
+  const baseQuantityByCategory = siteRequirements.reduce((quantities, requirement) => {
+    quantities[requirement.categoryId] = Number(requirement.weeklyQuantities?.[dayKey] || 0);
+    return quantities;
+  }, {});
+  const additionalCountsByCategory = {};
+
+  return entries.map((entry) => {
+    const category = state.categories.find((item) => item.id === entry.categoryId);
+    additionalCountsByCategory[entry.categoryId] = Number(additionalCountsByCategory[entry.categoryId] || 0) + 1;
+
+    return {
+      id: entry.id,
+      siteId: entry.siteId,
+      dayKey: entry.dayKey,
+      categoryId: entry.categoryId,
+      categoryName: category?.name || entry.categoryName || "Categoria no encontrada",
+      slotIndex: Number(baseQuantityByCategory[entry.categoryId] || 0) + additionalCountsByCategory[entry.categoryId],
+      isAdditional: true,
+    };
+  });
+}
+
+function createAdditionalSlotId(siteId, dayKey) {
+  const suffix = window.crypto?.randomUUID
+    ? window.crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${siteId}-${dayKey}-additional-${suffix}`;
+}
+
+function additionalSlotsFromCalendar(calendar) {
+  return (calendar.assignments || [])
+    .filter((assignment) => assignment.isAdditional)
+    .reduce((groupedSlots, assignment) => {
+      const key = getCalendarTaskKey(assignment.siteId, assignment.dayKey);
+      groupedSlots[key] = [
+        ...(groupedSlots[key] || []),
+        {
+          id: assignment.slotId,
+          siteId: assignment.siteId,
+          dayKey: assignment.dayKey,
+          categoryId: assignment.categoryId,
+          categoryName: assignment.categoryName,
+        },
+      ];
+      return groupedSlots;
+    }, {});
 }
 
 function addCalendarTask(siteId, dayKey) {
@@ -843,7 +1539,7 @@ function createCalendarTaskEntryId() {
 
 function getAssignedEmployeesForSiteDay(siteId, dayKey) {
   const siteRequirements = state.requirements.filter((requirement) => requirement.siteId === siteId);
-  const slots = buildDaySlots(siteId, siteRequirements, dayKey);
+  const slots = getDaySlots(siteId, siteRequirements, dayKey);
   const employeeIds = new Set(slots.map((slot) => state.calendarAssignments[slot.id]).filter(Boolean));
 
   return state.employees.filter((employee) => employeeIds.has(employee.id));
@@ -970,7 +1666,7 @@ function renderCategories() {
         .join("")
     : `<option value="">Crea una categoria primero</option>`;
 
-  renderEmployeeBackupOptions(getSelectedValues(elements.employeeBackupCategories));
+  renderEmployeeBackupOptions(getSelectedCheckboxValues(elements.employeeBackupCategories));
 
   elements.categoriesList.innerHTML = state.categories.length
     ? state.categories.map(renderCategory).join("")
@@ -1056,6 +1752,7 @@ function renderCategory(category) {
       </summary>
       <div class="item-body">
         <p>${escapeHtml(category.description || "Sin descripcion")}</p>
+        <p>Ordenamiento en calendario: ${Number(category.calendarPriority || 99)}</p>
         <p>${category.temporary ? "Temporal: no valida descanso semanal" : "Permanente"}</p>
         <div class="item-actions">
           <button class="secondary" type="button" data-edit-category="${category.id}">Editar</button>
@@ -1084,6 +1781,7 @@ function renderEmployee(employee) {
         <p>Categoria principal: ${escapeHtml(category?.name || "Categoria no encontrada")}</p>
         <p>Sede habitual: ${escapeHtml(preferredSite?.name || "Sin sede habitual")}</p>
         <p>Puede reemplazar: ${escapeHtml(backupCategories || "Sin reemplazos configurados")}</p>
+        <p>${employee.teamLeader ? "Lider de equipo" : "No es lider de equipo"}</p>
         <p>Estado: ${employee.active === false ? "Inactivo" : "Activo"}</p>
         <p>${escapeHtml(employee.phone || "Sin telefono")}</p>
         <p>${escapeHtml(employee.notes || "Sin notas")}</p>
@@ -1162,6 +1860,7 @@ function editCategory(id) {
   state.editing.categoryId = id;
   elements.categoryName.value = category.name;
   elements.categoryDescription.value = category.description || "";
+  elements.categoryCalendarPriority.value = Number(category.calendarPriority || 99);
   elements.categoryTemporary.checked = Boolean(category.temporary);
   elements.categorySubmitButton.textContent = "Guardar categoria";
   elements.categoryCancelButton.hidden = false;
@@ -1177,6 +1876,7 @@ function editEmployee(id) {
   elements.employeeCategory.value = employee.categoryId;
   elements.employeePreferredSite.value = employee.preferredSiteId || "";
   renderEmployeeBackupOptions(employee.backupCategoryIds || []);
+  elements.employeeTeamLeader.checked = Boolean(employee.teamLeader);
   elements.employeePhone.value = employee.phone || "";
   elements.employeeNotes.value = employee.notes || "";
   elements.employeeActive.checked = employee.active !== false;
@@ -1234,6 +1934,7 @@ function editTask(id) {
 function resetCategoryForm() {
   state.editing.categoryId = null;
   elements.categoryForm.reset();
+  elements.categoryCalendarPriority.value = 99;
   elements.categorySubmitButton.textContent = "Crear categoria";
   elements.categoryCancelButton.hidden = true;
 }
@@ -1242,6 +1943,7 @@ function resetEmployeeForm() {
   state.editing.employeeId = null;
   elements.employeeForm.reset();
   elements.employeeActive.checked = true;
+  elements.employeeTeamLeader.checked = false;
   renderEmployeeBackupOptions();
   elements.employeeSubmitButton.textContent = "Crear empleado";
   elements.employeeCancelButton.hidden = true;
@@ -1289,12 +1991,13 @@ function renderEmployeeBackupOptions(selectedCategoryIds = []) {
   elements.employeeBackupCategories.innerHTML = availableCategories.length
     ? availableCategories
         .map((category) => `
-          <option value="${category.id}" ${selectedCategoryIds.includes(category.id) ? "selected" : ""}>
+          <label class="check-row checkbox-list-item">
+            <input type="checkbox" value="${category.id}" ${selectedCategoryIds.includes(category.id) ? "checked" : ""} />
             ${escapeHtml(category.name)}
-          </option>
+          </label>
         `)
         .join("")
-    : `<option value="">Sin categorias adicionales</option>`;
+    : `<span class="empty">Sin categorias adicionales disponibles.</span>`;
 }
 
 function formatWeeklyQuantities(weeklyQuantities) {
@@ -1318,6 +2021,16 @@ function formatTaskAssignmentMode(assignmentMode) {
   return assignmentMode === "person" ? "Responsable especifico" : "Equipo completo";
 }
 
+function compareRequirementsByCategoryPriority(firstRequirement, secondRequirement) {
+  const firstCategory = state.categories.find((item) => item.id === firstRequirement.categoryId);
+  const secondCategory = state.categories.find((item) => item.id === secondRequirement.categoryId);
+
+  const priorityDifference = Number(firstCategory?.calendarPriority || 99) - Number(secondCategory?.calendarPriority || 99);
+  if (priorityDifference !== 0) return priorityDifference;
+
+  return String(firstCategory?.name || "").localeCompare(String(secondCategory?.name || ""), "es");
+}
+
 function formatEmployeeOption(employee, selectedEmployeeId) {
   if (employee.id === selectedEmployeeId) return employee.name;
 
@@ -1325,10 +2038,36 @@ function formatEmployeeOption(employee, selectedEmployeeId) {
   return `${employee.name} (${category?.name || "Sin categoria"})`;
 }
 
+function slugifyFileName(value) {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .toLowerCase() || "sede";
+}
+
 function switchTab(tabName) {
   elements.tabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.configTab === tabName));
   elements.tabPanels.forEach((panel) => panel.classList.remove("is-visible"));
   document.getElementById(`${tabName}Panel`).classList.add("is-visible");
+}
+
+function switchSchedulerTab(tabName) {
+  if (!tabName) return;
+
+  state.schedulerTab = tabName;
+  renderSchedulerTabs();
+}
+
+function renderSchedulerTabs() {
+  elements.schedulerTabs.forEach((tab) => {
+    tab.classList.toggle("is-active", tab.dataset.schedulerTab === state.schedulerTab);
+  });
+
+  elements.schedulerPanels.forEach((panel) => {
+    panel.classList.toggle("is-visible", panel.dataset.schedulerPanel === state.schedulerTab);
+  });
 }
 
 function renderRoute() {
@@ -1365,4 +2104,8 @@ function escapeHtml(value) {
 
 function getSelectedValues(select) {
   return Array.from(select.selectedOptions).map((option) => option.value);
+}
+
+function getSelectedCheckboxValues(container) {
+  return Array.from(container.querySelectorAll("input:checked")).map((input) => input.value);
 }

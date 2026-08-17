@@ -8,6 +8,7 @@ export interface CalendarAssignmentSnapshot {
   categoryId: string;
   categoryName: string;
   slotIndex: number;
+  isAdditional?: boolean;
   employeeId: string;
   employeeName: string;
 }
@@ -26,6 +27,15 @@ export interface CalendarTaskSnapshot {
   employeeName: string;
 }
 
+export interface CalendarExceptionSnapshot {
+  alertId: string;
+  type: string;
+  title: string;
+  detail: string;
+  justification: string;
+  createdAt: string;
+}
+
 export interface Calendar {
   id: string;
   name: string;
@@ -34,6 +44,7 @@ export interface Calendar {
   status: CalendarStatus;
   assignments: CalendarAssignmentSnapshot[];
   tasks: CalendarTaskSnapshot[];
+  exceptions: CalendarExceptionSnapshot[];
   notes: string;
   createdAt: string;
   updatedAt: string;
@@ -47,5 +58,6 @@ export interface CalendarInput {
   status?: CalendarStatus;
   assignments?: CalendarAssignmentSnapshot[];
   tasks?: CalendarTaskSnapshot[];
+  exceptions?: CalendarExceptionSnapshot[];
   notes?: string;
 }

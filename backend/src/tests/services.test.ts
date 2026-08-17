@@ -92,12 +92,14 @@ async function testCategoriesService(): Promise<void> {
     name: "Planchero",
     description: "Personal de cocina",
     temporary: true,
+    calendarPriority: 3,
   });
 
   assert.ok(category.id);
   assert.equal(category.name, "Planchero");
   assert.equal(category.description, "Personal de cocina");
   assert.equal(category.temporary, true);
+  assert.equal(category.calendarPriority, 3);
   assert.equal(category.active, true);
 
   const categories = await listCategories();
@@ -109,15 +111,22 @@ async function testCategoriesService(): Promise<void> {
   const updatedCategory = await updateCategory(category.id, {
     name: "Cocina",
     temporary: false,
+    calendarPriority: 2,
     active: false,
   });
   assert.equal(updatedCategory?.name, "Cocina");
   assert.equal(updatedCategory?.temporary, false);
+  assert.equal(updatedCategory?.calendarPriority, 2);
   assert.equal(updatedCategory?.active, false);
 
   await assert.rejects(
     () => createCategory({ name: "Cocina" }),
     /CATEGORY_NAME_DUPLICATED/,
+  );
+
+  await assert.rejects(
+    () => updateCategory(category.id, { calendarPriority: 0 }),
+    /CATEGORY_CALENDAR_PRIORITY_INVALID/,
   );
 
   const deleted = await deleteCategory(category.id);
@@ -135,6 +144,7 @@ async function testEmployeesService(): Promise<void> {
     categoryId: category.id,
     preferredSiteId: site.id,
     backupCategoryIds: [backupCategory.id],
+    teamLeader: true,
     phone: "3001234567",
     notes: "Disponible fines de semana",
   });
@@ -144,6 +154,7 @@ async function testEmployeesService(): Promise<void> {
   assert.equal(employee.categoryId, category.id);
   assert.equal(employee.preferredSiteId, site.id);
   assert.deepEqual(employee.backupCategoryIds, [backupCategory.id]);
+  assert.equal(employee.teamLeader, true);
 
   const employees = await listEmployees();
   assert.equal(employees.length, 1);
@@ -154,10 +165,12 @@ async function testEmployeesService(): Promise<void> {
   const updatedEmployee = await updateEmployee(employee.id, {
     name: "Carlos G.",
     backupCategoryIds: [],
+    teamLeader: false,
     active: false,
   });
   assert.equal(updatedEmployee?.name, "Carlos G.");
   assert.deepEqual(updatedEmployee?.backupCategoryIds, []);
+  assert.equal(updatedEmployee?.teamLeader, false);
   assert.equal(updatedEmployee?.active, false);
 
   await assert.rejects(
@@ -304,6 +317,16 @@ async function testCalendarsService(): Promise<void> {
         employeeName: "",
       },
     ],
+    exceptions: [
+      {
+        alertId: "rest-many:employee",
+        type: "rest-many",
+        title: "Ana tiene 2 descansos",
+        detail: "Tiene descanso el lunes y el jueves.",
+        justification: "Acuerdo operativo aprobado.",
+        createdAt: "2026-08-17T00:00:00.000Z",
+      },
+    ],
   });
 
   assert.ok(calendar.id);
@@ -311,6 +334,7 @@ async function testCalendarsService(): Promise<void> {
   assert.equal(calendar.name, "Semana del 2026-08-17 al 2026-08-23");
   assert.equal(calendar.assignments.length, 1);
   assert.equal(calendar.tasks.length, 1);
+  assert.equal(calendar.exceptions.length, 1);
 
   const foundByWeek = await getCalendarByWeek("2026-08-17");
   assert.equal(foundByWeek?.id, calendar.id);
@@ -321,11 +345,13 @@ async function testCalendarsService(): Promise<void> {
     notes: "Ajustado",
     assignments: [],
     tasks: [],
+    exceptions: [],
   });
   assert.equal(updatedDraft.id, calendar.id);
   assert.equal(updatedDraft.notes, "Ajustado");
   assert.equal(updatedDraft.assignments.length, 0);
   assert.equal(updatedDraft.tasks.length, 0);
+  assert.equal(updatedDraft.exceptions.length, 0);
 
   const approved = await approveCalendar(calendar.id);
   assert.equal(approved?.status, "approved");

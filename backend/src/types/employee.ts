@@ -4,6 +4,7 @@ export interface Employee {
   categoryId: string;
   preferredSiteId: string;
   backupCategoryIds: string[];
+  teamLeader: boolean;
   phone: string;
   notes: string;
   active: boolean;
@@ -16,6 +17,7 @@ export interface EmployeeInput {
   categoryId?: string;
   preferredSiteId?: string;
   backupCategoryIds?: string[];
+  teamLeader?: boolean;
   phone?: string;
   notes?: string;
   active?: boolean;

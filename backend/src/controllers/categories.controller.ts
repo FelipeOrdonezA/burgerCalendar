@@ -60,5 +60,9 @@ function categoryErrorMessage(error: unknown): string {
     return "Ya existe una categoria con ese nombre";
   }
 
+  if (error instanceof Error && error.message === "CATEGORY_CALENDAR_PRIORITY_INVALID") {
+    return "El ordenamiento en el calendario debe ser un numero entero mayor a cero";
+  }
+
   return "El nombre de la categoria es obligatorio";
 }

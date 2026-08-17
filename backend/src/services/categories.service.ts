@@ -30,6 +30,7 @@ export async function createCategory(input: CategoryInput): Promise<Category> {
     name,
     description: input.description?.trim() || "",
     temporary: input.temporary ?? false,
+    calendarPriority: normalizeCalendarPriority(input.calendarPriority),
     active: input.active ?? true,
     createdAt: now,
     updatedAt: now,
@@ -61,6 +62,9 @@ export async function updateCategory(id: string, input: CategoryInput): Promise<
     name: nextName || current.name,
     description: input.description !== undefined ? input.description.trim() : current.description,
     temporary: input.temporary ?? current.temporary,
+    calendarPriority: input.calendarPriority !== undefined
+      ? normalizeCalendarPriority(input.calendarPriority)
+      : current.calendarPriority ?? 99,
     active: input.active ?? current.active,
     updatedAt: new Date().toISOString(),
   };
@@ -68,6 +72,17 @@ export async function updateCategory(id: string, input: CategoryInput): Promise<
   categories[index] = updated;
   await categoriesRepository.saveAll(categories);
   return updated;
+}
+
+function normalizeCalendarPriority(value: number | undefined): number {
+  if (value === undefined) return 99;
+
+  const priority = Number(value);
+  if (!Number.isInteger(priority) || priority < 1) {
+    throw new Error("CATEGORY_CALENDAR_PRIORITY_INVALID");
+  }
+
+  return priority;
 }
 
 export async function deleteCategory(id: string): Promise<boolean> {

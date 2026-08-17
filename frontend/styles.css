@@ -290,6 +290,21 @@ label {
   width: auto;
 }
 
+.checkbox-list {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+}
+
+.checkbox-list-item {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 30px;
+}
+
 input,
 select,
 textarea {
@@ -443,6 +458,52 @@ textarea {
   padding: 28px;
 }
 
+.scheduler-panel {
+  display: none;
+}
+
+.scheduler-panel.is-visible {
+  display: block;
+}
+
+.modal {
+  align-items: center;
+  background: rgba(32, 33, 36, 0.32);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 18px;
+  position: fixed;
+  z-index: 20;
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 44px rgba(32, 33, 36, 0.18);
+  display: grid;
+  gap: 14px;
+  max-width: 360px;
+  padding: 18px;
+  width: 100%;
+}
+
+.modal-card h3 {
+  margin: 0;
+}
+
+.modal-note {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+}
+
 .scheduler-topbar {
   align-items: flex-start;
   display: flex;
@@ -488,6 +549,11 @@ textarea {
   color: var(--brand-strong);
 }
 
+.pill.alert-pill {
+  background: #fdecea;
+  color: var(--danger);
+}
+
 .calendar-site {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -495,9 +561,21 @@ textarea {
   overflow: hidden;
 }
 
+.calendar-site.is-exporting {
+  overflow: visible;
+}
+
+.calendar-site.is-exporting .export-hidden {
+  display: none;
+}
+
 .calendar-site-header {
+  align-items: center;
   background: #fbfcfd;
   border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
   padding: 14px;
 }
 
@@ -507,6 +585,165 @@ textarea {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.alerts-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.info-card,
+.demand-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table-wrap {
+  overflow-x: auto;
+}
+
+.data-table {
+  border-collapse: collapse;
+  min-width: 820px;
+  width: 100%;
+}
+
+.data-table th,
+.data-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  background: #f0f3f5;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.data-table td {
+  font-size: 13px;
+}
+
+.data-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.detail-row td {
+  background: #fbfcfd;
+}
+
+.team-detail-grid {
+  display: grid;
+  gap: 8px 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.team-detail-grid p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.team-detail-wide {
+  grid-column: 1 / -1;
+}
+
+.demand-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.demand-days {
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  overflow-x: auto;
+}
+
+.demand-day {
+  border-right: 1px solid var(--line);
+  min-height: 116px;
+  padding: 10px;
+}
+
+.demand-day:last-child {
+  border-right: 0;
+}
+
+.demand-day h4 {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.demand-chip-list {
+  align-content: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.alerts-block {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.alerts-block-header {
+  border-bottom: 1px solid var(--line);
+  margin: -14px -14px 14px;
+  padding: 14px;
+}
+
+.alerts-block-header h3,
+.alerts-block-header p,
+.alert-card h4,
+.alert-card p {
+  margin: 0;
+}
+
+.alerts-block-header p,
+.alert-card p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.alerts-list {
+  display: grid;
+  gap: 10px;
+}
+
+.alert-card {
+  border: 1px solid var(--line);
+  border-left: 6px solid #8a1f11;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.alert-card.is-exception {
+  border-left-color: #175cd3;
+}
+
+.alert-card h4 {
+  font-size: 15px;
+}
+
+.exception-reason {
+  background: #f3f7ff;
+  border-radius: 6px;
+  margin-top: 8px !important;
+  padding: 8px;
 }
 
 .compact-button {
@@ -532,6 +769,28 @@ textarea {
   text-transform: uppercase;
 }
 
+.calendar-head-day {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.calendar-head-day > span:first-child {
+  flex: 1;
+}
+
+.day-count {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 11px;
+  min-width: 34px;
+  padding: 3px 7px;
+  text-align: center;
+}
+
 .calendar-head > div,
 .calendar-day {
   border-right: 1px solid var(--line);
@@ -547,22 +806,64 @@ textarea {
   min-height: 132px;
 }
 
-.calendar-day-summary {
-  margin-bottom: 10px;
+.calendar-day.has-alert {
+  background: #fff1f0;
 }
 
-.calendar-day-summary span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
+.calendar-staff-list {
+  align-content: start;
+  display: grid;
+  gap: 6px;
+  grid-auto-rows: min-content;
+  min-height: var(--staff-min-height);
 }
 
 .calendar-slot {
+  align-items: center;
   color: var(--muted);
   display: grid;
   font-size: 12px;
-  gap: 5px;
-  margin-bottom: 8px;
+  gap: 6px;
+  grid-template-columns: minmax(72px, 0.72fr) minmax(92px, 1fr);
+  margin-bottom: 0;
+  min-height: 33px;
+}
+
+.slot-title {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+  justify-content: space-between;
+  line-height: 1.2;
+}
+
+.slot-remove {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--danger);
+  display: inline-flex;
+  font-size: 12px;
+  justify-content: center;
+  min-height: 18px;
+  padding: 0;
+  width: 18px;
+}
+
+.calendar-slot.has-alert {
+  color: var(--danger);
+}
+
+.calendar-slot select.has-alert {
+  background: #fdecea;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.calendar-slot select {
+  font-size: 12px;
+  min-height: 32px;
+  padding: 6px 8px;
 }
 
 .day-tasks {
@@ -766,6 +1067,7 @@ textarea {
 @media (max-width: 760px) {
   .page-header,
   .layout,
+  .alerts-layout,
   .home-actions,
   .scheduler-controls,
   .scheduler-view.is-visible {

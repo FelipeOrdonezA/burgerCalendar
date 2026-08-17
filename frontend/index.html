@@ -64,6 +64,11 @@
                   Descripcion
                   <textarea id="categoryDescription" rows="3" placeholder="Uso o alcance de la categoria"></textarea>
                 </label>
+                <label>
+                  Ordenamiento en el calendario
+                  <input id="categoryCalendarPriority" type="number" min="1" step="1" required value="99" />
+                  <small>El numero menor aparece primero.</small>
+                </label>
                 <label class="check-row">
                   <input id="categoryTemporary" type="checkbox" />
                   Categoria temporal
@@ -93,7 +98,11 @@
                 </label>
                 <label>
                   Puede reemplazar en
-                  <select id="employeeBackupCategories" multiple size="4"></select>
+                  <div id="employeeBackupCategories" class="checkbox-list"></div>
+                </label>
+                <label class="check-row">
+                  <input id="employeeTeamLeader" type="checkbox" />
+                  Lider de equipo
                 </label>
                 <label>
                   Telefono
@@ -247,50 +256,149 @@
             </button>
           </div>
           <nav class="sidebar-nav" aria-label="Secciones del programador">
-            <button class="sidebar-item is-active" type="button">Cronograma</button>
-            <button class="sidebar-item" type="button" disabled>Equipo</button>
-            <button class="sidebar-item" type="button" disabled>Demanda</button>
-            <button class="sidebar-item" type="button" disabled>Alertas</button>
+            <button class="sidebar-item is-active" type="button" data-scheduler-tab="schedule">Cronograma</button>
+            <button class="sidebar-item" type="button" data-scheduler-tab="team">Equipo</button>
+            <button class="sidebar-item" type="button" data-scheduler-tab="demand">Demanda</button>
+            <button class="sidebar-item" type="button" data-scheduler-tab="alerts">Alertas</button>
           </nav>
           <a class="sidebar-link" href="#/">Volver al inicio</a>
         </aside>
 
         <section class="scheduler-content">
-          <header class="scheduler-topbar">
-            <div>
-              <p class="eyebrow">Calendario semanal</p>
-              <h2>Asignacion inicial por sede</h2>
-              <p>Los puestos se construyen desde los requerimientos configurados.</p>
-            </div>
-            <div class="header-actions">
-              <button id="expandSidebarButton" class="secondary" type="button" hidden>Mostrar menu</button>
-              <button id="schedulerRefreshButton" class="secondary" type="button">Actualizar datos</button>
-              <button id="clearCalendarButton" type="button">Limpiar asignaciones</button>
-            </div>
-          </header>
+          <section id="schedulePanel" class="scheduler-panel is-visible" data-scheduler-panel="schedule">
+            <header class="scheduler-topbar">
+              <div>
+                <p class="eyebrow">Calendario semanal</p>
+                <h2>Asignacion inicial por sede</h2>
+                <p>Los puestos se construyen desde los requerimientos configurados.</p>
+              </div>
+              <div class="header-actions">
+                <button id="expandSidebarButton" class="secondary" type="button" hidden>Mostrar menu</button>
+                <button id="schedulerRefreshButton" class="secondary" type="button">Actualizar datos</button>
+                <button id="clearCalendarButton" type="button">Limpiar asignaciones</button>
+              </div>
+            </header>
 
-          <section class="scheduler-controls">
-            <label>
-              Semana de trabajo
-              <select id="calendarWeekSelect"></select>
-            </label>
-            <div class="calendar-state">
-              <span id="calendarStatusBadge" class="pill">Nuevo borrador</span>
-              <p id="calendarMeta">Selecciona una semana para preparar el calendario.</p>
-            </div>
-            <div class="header-actions">
-              <button id="saveDraftButton" type="button">Guardar borrador</button>
-              <button id="approveCalendarButton" class="secondary" type="button">Aprobar calendario</button>
-              <button id="reopenCalendarButton" class="secondary" type="button" hidden>Volver a borrador</button>
-            </div>
+            <section class="scheduler-controls">
+              <label>
+                Semana de trabajo
+                <select id="calendarWeekSelect"></select>
+              </label>
+              <div class="calendar-state">
+                <span id="calendarStatusBadge" class="pill">Nuevo borrador</span>
+                <p id="calendarMeta">Selecciona una semana para preparar el calendario.</p>
+              </div>
+              <div class="header-actions">
+                <button id="saveDraftButton" type="button">Guardar borrador</button>
+                <button id="approveCalendarButton" class="secondary" type="button">Aprobar calendario</button>
+                <button id="reopenCalendarButton" class="secondary" type="button" hidden>Volver a borrador</button>
+              </div>
+            </section>
+
+            <div id="calendarGrid" class="calendar-grid"></div>
+            <div id="restsGrid" class="rests-section"></div>
           </section>
 
-          <div id="calendarGrid" class="calendar-grid"></div>
-          <div id="restsGrid" class="rests-section"></div>
+          <section id="teamPanel" class="scheduler-panel" data-scheduler-panel="team">
+            <header class="scheduler-topbar">
+              <div>
+                <p class="eyebrow">Equipo semanal</p>
+                <h2>Colaboradores involucrados</h2>
+                <p>Resumen operativo de las personas activas asignadas durante la semana.</p>
+              </div>
+            </header>
+
+            <section class="info-card">
+              <div class="data-table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Colaborador</th>
+                      <th>Tipo</th>
+                      <th>Descanso</th>
+                      <th>Asignaciones</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="teamSummaryTable"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+
+          <section id="demandPanel" class="scheduler-panel" data-scheduler-panel="demand">
+            <header class="scheduler-topbar">
+              <div>
+                <p class="eyebrow">Demanda configurada</p>
+                <h2>Requerimientos por sede</h2>
+                <p>Cantidades de personal configuradas para cada sede y dia.</p>
+              </div>
+            </header>
+
+            <div id="demandGrid" class="demand-grid"></div>
+          </section>
+
+          <section id="alertsPanel" class="scheduler-panel" data-scheduler-panel="alerts">
+            <header class="scheduler-topbar">
+              <div>
+                <p class="eyebrow">Control de aprobacion</p>
+                <h2>Alertas y excepciones</h2>
+                <p>Las alertas deben corregirse o justificarse antes de aprobar el calendario.</p>
+              </div>
+            </header>
+
+            <div class="alerts-layout">
+              <section class="alerts-block">
+                <div class="alerts-block-header">
+                  <h3>Alertas</h3>
+                  <p>Situaciones pendientes de revisar.</p>
+                </div>
+                <div id="alertsList" class="alerts-list"></div>
+              </section>
+
+              <section class="alerts-block">
+                <div class="alerts-block-header">
+                  <h3>Excepciones</h3>
+                  <p>Alertas omitidas con justificacion.</p>
+                </div>
+                <div id="exceptionsList" class="alerts-list"></div>
+              </section>
+            </div>
+          </section>
         </section>
       </section>
+
+      <div id="additionalSlotModal" class="modal" hidden>
+        <form id="additionalSlotForm" class="modal-card">
+          <h3>Agregar colaborador</h3>
+          <label>
+            Cargo adicional
+            <select id="additionalSlotCategory" required></select>
+          </label>
+          <div class="form-actions">
+            <button type="submit">Agregar</button>
+            <button id="additionalSlotCancelButton" class="secondary" type="button">Cancelar</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="exceptionModal" class="modal" hidden>
+        <form id="exceptionForm" class="modal-card">
+          <h3>Omitir alerta</h3>
+          <p id="exceptionAlertText" class="modal-note"></p>
+          <label>
+            Justificacion
+            <textarea id="exceptionReason" rows="4" placeholder="Explica por que esta alerta se acepta para esta semana" required></textarea>
+          </label>
+          <div class="form-actions">
+            <button type="submit">Guardar excepcion</button>
+            <button id="exceptionCancelButton" class="secondary" type="button">Cancelar</button>
+          </div>
+        </form>
+      </div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
