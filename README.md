@@ -1,57 +1,45 @@
 # Burger Calendar
 
-Aplicación web para la gestión y generación de cronogramas semanales del equipo de Burger Paisa.
+Aplicación web para configurar, construir, validar y aprobar cronogramas semanales del equipo de Burger Paisa.
 
-El proyecto busca centralizar la programación del personal de los diferentes puntos de venta, aplicar reglas de negocio y reducir errores en la asignación de trabajadores, cargos y días de descanso.
-
-## Problema que resuelve
-
-Burger Paisa administra varios puntos de venta con necesidades de personal diferentes según el día de la semana, el cargo y las condiciones operativas.
-
-La elaboración manual de los cronogramas puede generar problemas como:
-
-- Falta de personal en un punto de venta.
-- Asignación incorrecta de cargos.
-- Trabajadores sin su descanso semanal.
-- Descansos en días de alta demanda.
-- Asignación simultánea de un trabajador en dos puntos.
-- Incumplimiento de restricciones especiales de una semana.
-
-Burger Calendar busca automatizar y validar este proceso.
-
-## Puntos de venta
-
-Actualmente el sistema contempla los siguientes establecimientos:
-
-- Burger Zona Rosa.
-- Burger La 16.
-- Arepaisa.
-
-## Funcionalidades previstas
-
-- Gestión de empleados.
-- Gestión de cargos.
-- Gestión de puntos de venta.
-- Configuración de necesidades mínimas de personal.
-- Registro de restricciones semanales.
-- Asignación de descansos.
-- Generación de cronogramas.
-- Validación de cobertura por punto de venta y cargo.
-- Consulta de cronogramas semanales.
-- Detección de conflictos en las asignaciones.
+El proyecto busca reducir errores en la programación del personal de varias sedes, controlar descansos, asignaciones, tareas operativas y requerimientos por cargo. El MVP actual ya es funcional y está listo para pruebas en ambiente real con datos limpios.
 
 ## Estado actual
 
-El proyecto se encuentra en desarrollo y ya alcanzo su primer hito funcional: la configuracion inicial de la aplicacion.
+El proyecto alcanzó el hito de **MVP funcional del programador**.
 
-Este hito cubre las entidades que se configuran al inicio y luego solo se modifican cuando cambia la operacion:
+Este hito incluye:
 
-- Categorias o cargos operativos.
-- Empleados asociados a una categoria.
-- Sedes o puntos de venta.
-- Requerimientos de personal por sede, categoria, dia de la semana y festivo.
+- Configuración inicial de cargos, empleados, sedes, requerimientos y tareas.
+- Programador semanal con selección de semana.
+- Cronograma por sede y día.
+- Asignación manual de colaboradores.
+- Colaboradores adicionales por eventos o necesidades especiales.
+- Tareas por sede y día, con o sin responsable.
+- Persistencia de calendarios en JSON.
+- Estados de calendario: `borrador` y `aprobado`.
+- Alertas visuales y sección centralizada de alertas.
+- Excepciones justificadas para alertas.
+- Bloqueo de aprobación cuando existen alertas sin justificar.
+- Vistas informativas de equipo y demanda.
+- Exportación PNG por sede cuando el calendario está aprobado.
+- Script para limpiar datos de prueba y dejar los JSON listos para carga real.
 
-La informacion se persiste en archivos JSON dentro de `backend/src/data`, sin base de datos externa para esta fase del MVP.
+## Problema que resuelve
+
+Burger Paisa administra varias sedes con necesidades de personal diferentes según el día, el cargo y la operación.
+
+La elaboración manual de cronogramas puede generar problemas como:
+
+- Falta de personal requerido en una sede.
+- Asignación de una persona a un cargo no permitido.
+- Asignación simultánea de una persona más de una vez el mismo día.
+- Colaboradores sin descanso semanal.
+- Colaboradores con más de un descanso.
+- Descansos en días de alta demanda.
+- Falta de claridad sobre tareas puntuales de la semana.
+
+Burger Calendar centraliza esta información y ayuda a detectar inconsistencias antes de aprobar el calendario.
 
 ## Tecnologías
 
@@ -61,181 +49,329 @@ La informacion se persiste en archivos JSON dentro de `backend/src/data`, sin ba
 - Express
 - TypeScript
 - CORS
+- Persistencia en archivos JSON
 
 ### Frontend
 
 - HTML
 - CSS
 - JavaScript
-- Servidor estatico local con `serve`
+- `serve` para entorno local
+- `html-to-image` por CDN para exportar PNG
 
-### Herramientas de desarrollo
+### Herramientas
 
 - Git
 - GitHub
 - npm
-- Nodemon
+- ts-node
+- ts-node-dev
 
-## Arquitectura inicial
-
-El backend utiliza una separación por responsabilidades:
+## Estructura general
 
 ```text
-src/
-├── controllers/
-├── data/
-├── repositories/
-├── routes/
-├── scripts/
-├── services/
-├── tests/
-├── types/
-├── utils/
-│   └── app.ts
-│   └── server.ts
+burgerCalendar/
+├── backend/
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── data/
+│   │   ├── repositories/
+│   │   ├── routes/
+│   │   ├── scripts/
+│   │   ├── services/
+│   │   ├── tests/
+│   │   ├── types/
+│   │   └── utils/
+│   └── package.json
+├── frontend/
+│   ├── app.js
+│   ├── index.html
+│   └── styles.css
+├── package.json
+└── README.md
 ```
 
-### Responsabilidad de cada capa
+## Arquitectura del backend
 
-- **Routes:** definen los endpoints y conectan cada ruta con su controlador.
-- **Controllers:** reciben la petición HTTP y construyen la respuesta.
-- **Services:** contienen la lógica de negocio.
-- **Repositories:** administran el acceso a la base de datos.
-- **Middlewares:** procesan peticiones antes o después de los controladores.
-- **Schemas:** validan la estructura de los datos recibidos.
-- **Types:** contienen tipos e interfaces de TypeScript.
-- **Scripts:** contienen tareas manuales de mantenimiento, como reiniciar archivos JSON.
-- **Data:** contiene los archivos JSON que actuan como almacenamiento del MVP.
+El backend separa responsabilidades por capas:
 
-## Hito 1: configuracion inicial
+- **Routes:** definen los endpoints.
+- **Controllers:** reciben peticiones HTTP y devuelven respuestas.
+- **Services:** contienen lógica de negocio y validaciones.
+- **Repositories:** abstraen lectura y escritura en JSON.
+- **Types:** definen interfaces TypeScript.
+- **Scripts:** contienen tareas manuales, como limpieza de datos.
+- **Data:** contiene los archivos JSON usados como almacenamiento del MVP.
+- **Utils:** contiene la app Express y el arranque del servidor.
 
-La primera fase funcional permite administrar los datos base que necesita el futuro generador de cronogramas.
+## Persistencia
 
-### Categorias
+Durante el MVP no se usa base de datos externa. La información se guarda en archivos JSON dentro de `backend/src/data`.
 
-Las categorias representan cargos o tipos de personal, por ejemplo:
-
-- Cajero.
-- Planchero.
-- Atencion.
-- Apoyo temporal.
-
-Cada categoria puede marcarse como temporal. Esta marca se usara mas adelante para excluir empleados temporales de validaciones como descanso semanal obligatorio.
-
-### Empleados
-
-Los empleados se crean con:
-
-- Nombre.
-- Categoria.
-- Telefono opcional.
-- Notas opcionales.
-
-La categoria permite que el sistema entienda que rol puede cumplir la persona.
-
-### Sedes
-
-Las sedes representan los puntos de venta o lugares de operacion. Por ahora tienen:
-
-- Nombre.
-- Ubicacion.
-
-### Requerimientos de personal
-
-Los requerimientos definen cuantas personas se necesitan por sede y categoria.
-
-Cada requerimiento guarda cantidades para:
-
-- Lunes.
-- Martes.
-- Miercoles.
-- Jueves.
-- Viernes.
-- Sabado.
-- Domingo.
-- Festivo.
-
-Esto permite modelar casos como una sede que requiere dos plancheros de lunes a jueves, tres de viernes a domingo y tres en festivos.
-
-## Persistencia en JSON
-
-Durante esta fase no se usa base de datos. Cada entidad se guarda en un archivo JSON dentro de `backend/src/data`:
+Archivos usados actualmente:
 
 ```text
+calendars.json
 categories.json
 employees.json
 sites.json
 staff-requirements.json
+tasks.json
 ```
 
-Para limpiar los datos de prueba y volver a un estado vacio:
+Los datos del repositorio quedaron limpios para iniciar pruebas reales. Cada archivo directo de datos queda como:
+
+```json
+[]
+```
+
+También existen carpetas antiguas dentro de `backend/src/data`, pero el MVP actual usa los JSON listados arriba.
+
+## Limpieza de datos
+
+Para borrar datos de prueba y volver a un estado vacío:
 
 ```bash
 cd backend
 npm run data:reset
 ```
 
-El script detecta automaticamente los archivos `.json` ubicados directamente en `backend/src/data` y los reinicia a arreglos vacios.
+El script reinicia automáticamente todos los archivos `.json` ubicados directamente en `backend/src/data`.
+
+## Configuración inicial
+
+La vista de configuración inicial permite administrar los datos base de la aplicación.
+
+### Categorías
+
+Representan cargos o roles operativos, por ejemplo cajero, planchero o atención.
+
+Campos principales:
+
+- Nombre.
+- Descripción.
+- Ordenamiento en calendario.
+- Categoría temporal.
+- Activo.
+
+El ordenamiento define el orden visual de los cargos en el cronograma. El número menor aparece primero.
+
+La marca temporal permite excluir empleados de esa categoría de validaciones de descanso semanal.
+
+### Empleados
+
+Campos principales:
+
+- Nombre.
+- Categoría principal.
+- Sede habitual.
+- Categorías que puede reemplazar.
+- Líder de equipo.
+- Teléfono.
+- Notas.
+- Activo.
+
+Los empleados inactivos no aparecen en los selectores del calendario.
+
+### Sedes
+
+Representan puntos de venta o lugares de operación.
+
+Campos principales:
+
+- Nombre.
+- Ubicación.
+
+### Requerimientos
+
+Definen cuántas personas se necesitan por sede, categoría y día de la semana.
+
+Cada requerimiento guarda cantidades para:
+
+- Lunes.
+- Martes.
+- Miércoles.
+- Jueves.
+- Viernes.
+- Sábado.
+- Domingo.
+- Festivo.
+
+### Tareas
+
+Permiten configurar tareas operativas que luego se asignan en el programador.
+
+Campos principales:
+
+- Nombre.
+- Tipo de asignación:
+  - Equipo completo.
+  - Responsable específico.
+- Descripción.
+
+## Programador
+
+El Programador es la pantalla principal del MVP. Está dividido en:
+
+- Cronograma.
+- Equipo.
+- Demanda.
+- Alertas.
+
+### Cronograma
+
+Permite seleccionar una semana y construir el calendario por sede.
+
+Incluye:
+
+- Tabla semanal por sede.
+- Días de lunes a domingo.
+- Puestos generados desde los requerimientos.
+- Selectores de empleados activos.
+- Colaboradores adicionales por día.
+- Tareas por sede y día.
+- Resumen de descansos.
+- Guardado como borrador.
+- Aprobación.
+- Reapertura de calendario aprobado a borrador.
+- Exportación PNG por sede cuando el calendario está aprobado.
+
+Los calendarios se identifican por semana de trabajo. No se permite duplicar calendarios para el mismo rango semanal.
+
+### Equipo
+
+Vista informativa con los colaboradores activos involucrados en la semana.
+
+Muestra una tabla con:
+
+- Colaborador.
+- Tipo: `fijo` o `temporal`.
+- Descanso.
+- Asignaciones.
+- Detalle colapsable por empleado.
+
+El detalle muestra información adicional como categoría, sede habitual, reemplazos, teléfono, líder, estado, asignaciones y notas.
+
+### Demanda
+
+Vista informativa de requerimientos configurados.
+
+Muestra una tarjeta por sede y, dentro de cada sede, las cantidades requeridas por día y categoría.
+
+### Alertas
+
+Centraliza las inconsistencias detectadas en el calendario.
+
+La sección tiene dos bloques:
+
+- **Alertas:** situaciones pendientes.
+- **Excepciones:** alertas omitidas con justificación.
+
+Cada alerta puede omitirse con justificación. Al hacerlo, pasa a Excepciones y queda guardada dentro del calendario.
+
+## Validaciones actuales
+
+El MVP valida en frontend:
+
+- Empleado que descansa más de un día.
+- Empleado que descansa cero días.
+- Empleado asignado más de una vez el mismo día.
+- Empleado asignado con categoría incompatible.
+- Descansos en viernes, sábado o domingo.
+
+Además, en la vista de cronograma se resaltan visualmente:
+
+- Descansos repetidos.
+- Descansos en días no permitidos.
+- Doble asignación.
+- Categoría incompatible.
+
+Cada alerta visual incluye un mensaje al pasar el mouse.
+
+## Aprobación de calendarios
+
+Un calendario puede estar en estado:
+
+- `draft`: borrador.
+- `approved`: aprobado.
+
+Para aprobar un calendario:
+
+1. Debe existir un borrador guardado.
+2. No debe haber alertas pendientes.
+3. Si existen alertas, todas deben estar justificadas como excepciones.
+
+Cuando el calendario está aprobado:
+
+- Se bloquea la edición del cronograma.
+- Se bloquea la edición de tareas del calendario.
+- Se bloquean colaboradores adicionales.
+- Se habilita la descarga PNG por sede.
+
+Para modificar un calendario aprobado, primero debe volver a borrador.
+
+## Exportación PNG
+
+Cada sede puede descargarse como imagen PNG cuando el calendario está aprobado.
+
+La exportación captura únicamente la caja de la sede seleccionada, sin incluir el botón de descarga dentro de la imagen.
+
+El navegador decide si descarga automáticamente en la carpeta de descargas o si pregunta la ubicación, según la configuración local del usuario.
 
 ## Endpoints principales
 
-La API expone recursos REST para la configuracion inicial:
+La API expone recursos REST:
 
-| Metodo | Endpoint | Descripcion |
+| Método | Endpoint | Descripción |
 |---|---|---|
-| GET | `/api/categories` | Listar categorias |
-| POST | `/api/categories` | Crear categoria |
-| PATCH | `/api/categories/:id` | Actualizar categoria |
-| DELETE | `/api/categories/:id` | Eliminar categoria |
+| GET | `/api/categories` | Listar categorías |
+| GET | `/api/categories/:id` | Consultar categoría |
+| POST | `/api/categories` | Crear categoría |
+| PATCH/PUT | `/api/categories/:id` | Actualizar categoría |
+| DELETE | `/api/categories/:id` | Eliminar categoría |
 | GET | `/api/employees` | Listar empleados |
+| GET | `/api/employees/:id` | Consultar empleado |
 | POST | `/api/employees` | Crear empleado |
-| PATCH | `/api/employees/:id` | Actualizar empleado |
+| PATCH/PUT | `/api/employees/:id` | Actualizar empleado |
 | DELETE | `/api/employees/:id` | Eliminar empleado |
 | GET | `/api/sites` | Listar sedes |
+| GET | `/api/sites/:id` | Consultar sede |
 | POST | `/api/sites` | Crear sede |
-| PATCH | `/api/sites/:id` | Actualizar sede |
+| PATCH/PUT | `/api/sites/:id` | Actualizar sede |
 | DELETE | `/api/sites/:id` | Eliminar sede |
 | GET | `/api/staff-requirements` | Listar requerimientos |
+| GET | `/api/staff-requirements/:id` | Consultar requerimiento |
 | POST | `/api/staff-requirements` | Crear requerimiento |
-| PATCH | `/api/staff-requirements/:id` | Actualizar requerimiento |
+| PATCH/PUT | `/api/staff-requirements/:id` | Actualizar requerimiento |
 | DELETE | `/api/staff-requirements/:id` | Eliminar requerimiento |
-
-## Códigos HTTP utilizados
-
-| Código | Significado | Uso |
-|---|---|---|
-| 200 | OK | Consulta o actualización exitosa |
-| 201 | Created | Recurso creado correctamente |
-| 204 | No Content | Operación exitosa sin cuerpo de respuesta |
-| 400 | Bad Request | Petición o datos inválidos |
-| 401 | Unauthorized | Usuario no autenticado |
-| 403 | Forbidden | Usuario sin permisos |
-| 404 | Not Found | Recurso no encontrado |
-| 409 | Conflict | Conflicto con datos existentes |
-| 422 | Unprocessable Entity | Incumplimiento de una regla de validación |
-| 500 | Internal Server Error | Error interno inesperado |
+| GET | `/api/tasks` | Listar tareas |
+| GET | `/api/tasks/:id` | Consultar tarea |
+| POST | `/api/tasks` | Crear tarea |
+| PATCH/PUT | `/api/tasks/:id` | Actualizar tarea |
+| DELETE | `/api/tasks/:id` | Eliminar tarea |
+| GET | `/api/calendars` | Listar calendarios |
+| GET | `/api/calendars/:id` | Consultar calendario |
+| GET | `/api/calendars/week/:weekStartDate` | Consultar calendario por semana |
+| POST | `/api/calendars` | Guardar borrador |
+| PATCH | `/api/calendars/:id/approve` | Aprobar calendario |
+| PATCH | `/api/calendars/:id/reopen` | Volver calendario aprobado a borrador |
 
 ## Instalación
 
-Clona el repositorio:
+Clonar el repositorio:
 
 ```bash
 git clone <URL_DEL_REPOSITORIO>
-```
-
-Ingresa a la carpeta del proyecto:
-
-```bash
 cd burgerCalendar
 ```
 
-Instala las dependencias:
+Instalar dependencias de la raíz:
 
 ```bash
 npm install
 ```
 
-Si el backend tiene su propio `package.json`, ingresa a la carpeta correspondiente:
+Instalar dependencias del backend:
 
 ```bash
 cd backend
@@ -244,34 +380,51 @@ npm install
 
 ## Ejecución en desarrollo
 
-Levanta el backend desde la carpeta `backend`:
+Levantar backend:
 
 ```bash
 cd backend
 npm run dev
 ```
 
-La API inicia en:
+La API queda disponible en:
 
 ```text
 http://localhost:3000
 ```
 
-En otra terminal, desde la raiz del proyecto, levanta el frontend:
+En otra terminal, levantar frontend desde la raíz:
 
 ```bash
 npm run frontend
 ```
 
-La vista web inicia en:
+La aplicación queda disponible en:
 
 ```text
 http://localhost:5173
 ```
 
+## Scripts útiles
+
+Desde `backend`:
+
+```bash
+npm run dev
+npm run build
+npm run test:services
+npm run data:reset
+```
+
+Desde la raíz:
+
+```bash
+npm run frontend
+```
+
 ## Pruebas
 
-El backend cuenta con pruebas de servicios para validar la logica sin levantar el servidor HTTP.
+Las pruebas actuales validan servicios del backend sin levantar el servidor HTTP.
 
 Desde `backend`:
 
@@ -279,138 +432,54 @@ Desde `backend`:
 npm run test:services
 ```
 
-Actualmente las pruebas cubren:
+Actualmente cubren:
 
-- Categorias.
+- Categorías.
 - Empleados.
 - Sedes.
-- Requerimientos de personal.
+- Requerimientos.
+- Tareas.
+- Calendarios.
+- Persistencia de asignaciones, tareas y excepciones.
+- Bloqueo de edición sobre calendario aprobado.
 
-## Endpoints de verificación
+## Estado para pruebas reales
 
-### Ruta principal
+El repositorio quedó sincronizado con:
 
-```http
-GET /
-```
+- MVP funcional del programador.
+- JSON de datos limpios.
+- Pruebas pasando.
+- Build del backend pasando.
+- Frontend validado sintácticamente.
 
-Respuesta esperada:
+Esto permite iniciar la carga de datos reales desde la configuración inicial y probar el flujo completo hasta aprobación y exportación PNG.
 
-```text
-Servidor Express con TypeScript y Node.js funcionando correctamente
-```
+## Próximos pasos sugeridos
 
-### Estado de la API
-
-```http
-GET /api/health
-```
-
-Respuesta esperada:
-
-```json
-{
-  "ok": true,
-  "message": "API Cronogramas Burger Paisa funcionando"
-}
-```
-
-## Ejemplo de creacion de un requerimiento
-
-Petición:
-
-```http
-POST /api/staff-requirements
-Content-Type: application/json
-```
-
-Cuerpo:
-
-```json
-{
-  "siteId": "id-de-la-sede",
-  "categoryId": "id-de-la-categoria",
-  "weeklyQuantities": {
-    "monday": 2,
-    "tuesday": 2,
-    "wednesday": 2,
-    "thursday": 2,
-    "friday": 3,
-    "saturday": 3,
-    "sunday": 3,
-    "holiday": 3
-  },
-  "notes": "Refuerzo de fin de semana"
-}
-```
-
-## Convenciones del proyecto
-
-### Archivos
-
-Se utiliza minúscula y sufijo de responsabilidad:
-
-```text
-employees.routes.ts
-employees.controller.ts
-employees.service.ts
-employees.repository.ts
-```
-
-### Código
-
-- Clases e interfaces: `PascalCase`.
-- Variables y funciones: `camelCase`.
-- Constantes globales: `UPPER_SNAKE_CASE`.
-- URLs: minúsculas y recursos en plural.
-
-Ejemplos:
-
-```ts
-interface Employee {}
-
-function createEmployee() {}
-
-const DEFAULT_PORT = 3000;
-```
-
-## Principios de diseño
-
-El proyecto busca aplicar:
-
-- Separación de responsabilidades.
-- Arquitectura modular.
-- API REST orientada a recursos.
-- Tipado estático con TypeScript.
-- Validación de datos.
-- Manejo coherente de códigos HTTP.
-- Reglas de negocio independientes de Express.
-- Código mantenible y testeable.
-
-## Próximos pasos
-
-- Mejorar la edicion desde frontend.
-- Implementar manejo centralizado de errores.
-- Modelar restricciones y reglas del cronograma.
-- Implementar el generador de horarios.
-- Validar descanso semanal excluyendo categorias temporales.
-- Generar una propuesta semanal de turnos.
-- Documentar la API.
+- Probar el MVP con datos reales.
+- Revisar experiencia visual del PNG exportado en WhatsApp.
+- Definir si las validaciones deben pasar del frontend al backend.
+- Preparar despliegue en un ambiente real.
+- Evaluar autenticación y roles de usuario.
+- Mejorar manejo centralizado de errores.
+- Documentar ejemplos de payload por endpoint si se requiere integración externa.
 
 ## Objetivo de aprendizaje
 
-Este proyecto también se desarrolla como ejercicio de formación en ingeniería de software.
+Este proyecto también funciona como ejercicio de formación en ingeniería de software.
 
-Durante su construcción se practican conceptos como:
+Durante su construcción se practican:
 
-- Diseño de APIs REST.
-- Arquitectura backend.
+- Diseño de API REST.
+- Arquitectura backend por capas.
 - TypeScript.
-- Manejo de errores.
-- Persistencia de datos.
+- Persistencia en JSON.
+- Validaciones de negocio.
 - Pruebas automatizadas.
+- Diseño de UI/UX progresivo.
 - Git y control de versiones.
-- Despliegue de aplicaciones Node.js.
+- Preparación de hitos funcionales.
 
 ## Autor
 
