@@ -47,6 +47,10 @@ const elements = {
   schedulerRefreshButton: document.getElementById("schedulerRefreshButton"),
   schedulerTabs: document.querySelectorAll("[data-scheduler-tab]"),
   schedulerPanels: document.querySelectorAll("[data-scheduler-panel]"),
+  sidebarCoverageCount: document.getElementById("sidebarCoverageCount"),
+  sidebarAlertsCount: document.getElementById("sidebarAlertsCount"),
+  sidebarExceptionsCount: document.getElementById("sidebarExceptionsCount"),
+  sidebarTemporaryCount: document.getElementById("sidebarTemporaryCount"),
   statusMessage: document.getElementById("statusMessage"),
   tabs: document.querySelectorAll("[data-config-tab]"),
   tabPanels: document.querySelectorAll(".config-tab-panel"),
@@ -418,6 +422,7 @@ function render() {
   renderTeamSummary();
   renderDemandSummary();
   renderCalendarAlerts();
+  renderSchedulerStatus();
   renderSchedulerTabs();
   renderCategories();
   renderEmployees();
@@ -476,6 +481,7 @@ function renderCalendar() {
     renderTeamSummary();
     renderDemandSummary();
     renderCalendarAlerts();
+    renderSchedulerStatus();
     return;
   }
 
@@ -528,6 +534,7 @@ function renderCalendar() {
 
   renderCalendarAlerts();
   renderTeamSummary();
+  renderSchedulerStatus();
 }
 
 function renderSiteCalendar(site) {
@@ -631,6 +638,10 @@ function renderCalendarSlot(slot) {
   const alerts = getCalendarSlotAlerts(slot);
   const hasAssignmentAlert = alerts.length > 0;
   const alertMessage = alerts.join(" ");
+  const selectClass = [
+    hasAssignmentAlert ? "has-alert" : "",
+    selectedEmployeeId ? "" : "is-unassigned",
+  ].filter(Boolean).join(" ");
   const categoryLabel = slot.isAdditional
     ? `${escapeHtml(slot.categoryName)} #${slot.slotIndex} (adicional)`
     : `${escapeHtml(slot.categoryName)} #${slot.slotIndex}`;
@@ -641,7 +652,7 @@ function renderCalendarSlot(slot) {
         ${categoryLabel}
         ${slot.isAdditional ? `<button class="slot-remove" type="button" data-delete-additional-slot="${slot.id}" ${isApproved ? "disabled" : ""}>x</button>` : ""}
       </span>
-      <select class="${hasAssignmentAlert ? "has-alert" : ""}" data-calendar-slot="${slot.id}" title="${escapeHtml(alertMessage)}" ${isApproved ? "disabled" : ""}>
+      <select class="${selectClass}" data-calendar-slot="${slot.id}" title="${escapeHtml(alertMessage)}" ${isApproved ? "disabled" : ""}>
         <option value="">Sin asignar</option>
         ${activeEmployees.map((employee) => `
           <option value="${employee.id}" ${employee.id === selectedEmployeeId ? "selected" : ""}>
@@ -826,6 +837,31 @@ function getSiteFilledSlots(siteId) {
     .length;
 }
 
+function getAllCalendarSlots() {
+  return state.sites.flatMap((site) => {
+    const siteRequirements = state.requirements.filter((requirement) => requirement.siteId === site.id);
+    return DAYS.flatMap(([dayKey]) => getDaySlots(site.id, siteRequirements, dayKey));
+  });
+}
+
+function getCalendarCoverageStats() {
+  const slots = getAllCalendarSlots();
+  const assigned = slots.filter((slot) => state.calendarAssignments[slot.id]).length;
+
+  return {
+    assigned,
+    total: slots.length,
+  };
+}
+
+function getTemporaryAssignmentCount() {
+  return getAssignedSlotDetails().filter((detail) => {
+    const employee = state.employees.find((item) => item.id === detail.employeeId);
+    const category = state.categories.find((item) => item.id === employee?.categoryId);
+    return Boolean(category?.temporary);
+  }).length;
+}
+
 function getCalendarAlerts() {
   return [
     ...getRestAlerts(),
@@ -986,6 +1022,19 @@ function renderCalendarAlerts() {
   });
 }
 
+function renderSchedulerStatus() {
+  if (!elements.sidebarCoverageCount) return;
+
+  const coverage = getCalendarCoverageStats();
+  const pendingAlerts = getBlockingCalendarAlerts();
+  const exceptions = Object.values(state.calendarExceptions);
+
+  elements.sidebarCoverageCount.textContent = `${coverage.assigned}/${coverage.total}`;
+  elements.sidebarAlertsCount.textContent = String(pendingAlerts.length);
+  elements.sidebarExceptionsCount.textContent = String(exceptions.length);
+  elements.sidebarTemporaryCount.textContent = String(getTemporaryAssignmentCount());
+}
+
 function renderAlertCard(alert, variant) {
   const isException = variant === "exception";
   return `
@@ -1033,6 +1082,7 @@ function saveCalendarException(event) {
 
   closeExceptionModal();
   renderCalendarAlerts();
+  renderSchedulerStatus();
   showStatus("Excepcion registrada. Guarda el borrador para conservarla.", "success");
 }
 

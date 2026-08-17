@@ -455,6 +455,47 @@ textarea {
   gap: 8px;
 }
 
+.sidebar-status-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.sidebar-status-card h2 {
+  font-size: 15px;
+  margin: 0 0 12px;
+}
+
+.sidebar-status-card dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.sidebar-status-card div {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.sidebar-status-card dt {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+
+.sidebar-status-card dd {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0;
+  min-width: 42px;
+  padding: 4px 8px;
+  text-align: center;
+}
+
 .sidebar-item {
   background: transparent;
   border-color: rgba(255, 255, 255, 0.18);
@@ -882,16 +923,22 @@ textarea {
   color: var(--danger);
 }
 
-.calendar-slot select.has-alert {
-  background: #fdecea;
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
 .calendar-slot select {
   font-size: 12px;
   min-height: 32px;
   padding: 6px 8px;
+}
+
+.calendar-slot select.is-unassigned {
+  background: #f6f7f8;
+  border-color: #e4e7ec;
+  color: var(--muted);
+}
+
+.calendar-slot select.has-alert {
+  background: #fdecea;
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .day-tasks {

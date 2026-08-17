@@ -261,6 +261,27 @@
             <button class="sidebar-item" type="button" data-scheduler-tab="demand">Demanda</button>
             <button class="sidebar-item" type="button" data-scheduler-tab="alerts">Alertas</button>
           </nav>
+          <section class="sidebar-status-card" aria-label="Estado del calendario">
+            <h2>Estado</h2>
+            <dl>
+              <div>
+                <dt>Cobertura</dt>
+                <dd id="sidebarCoverageCount">0/0</dd>
+              </div>
+              <div>
+                <dt>Alertas</dt>
+                <dd id="sidebarAlertsCount">0</dd>
+              </div>
+              <div>
+                <dt>Excepciones</dt>
+                <dd id="sidebarExceptionsCount">0</dd>
+              </div>
+              <div>
+                <dt>Temporales en uso</dt>
+                <dd id="sidebarTemporaryCount">0</dd>
+              </div>
+            </dl>
+          </section>
         </aside>
 
         <section class="scheduler-content">
