@@ -1,0 +1,11 @@
+[
+  {
+    "id": "task-sample",
+    "name": "Tarea ejemplo",
+    "description": "Descripcion de la tarea.",
+    "assignmentMode": "team",
+    "active": true,
+    "createdAt": "2026-08-17T00:00:00.000Z",
+    "updatedAt": "2026-08-17T00:00:00.000Z"
+  }
+]

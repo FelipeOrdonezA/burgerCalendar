@@ -106,9 +106,9 @@ El backend separa responsabilidades por capas:
 
 ## Persistencia
 
-Durante el MVP no se usa base de datos externa. La información se guarda en archivos JSON dentro de `backend/src/data`.
+Durante el MVP no se usa base de datos externa. La información se guarda en archivos JSON locales dentro de `backend/src/data`.
 
-Archivos usados actualmente:
+Archivos reales usados actualmente por la aplicación:
 
 ```text
 calendars.json
@@ -119,7 +119,13 @@ staff-requirements.json
 tasks.json
 ```
 
-Los datos del repositorio quedaron limpios para iniciar pruebas reales. Cada archivo directo de datos queda como:
+Estos archivos contienen información operativa real o de prueba local, por eso quedan ignorados por Git. El repositorio conserva plantillas de referencia en:
+
+```text
+backend/src/data/samples/
+```
+
+Cada archivo real puede iniciar vacío con:
 
 ```json
 []
@@ -136,7 +142,7 @@ cd backend
 npm run data:reset
 ```
 
-El script reinicia automáticamente todos los archivos `.json` ubicados directamente en `backend/src/data`.
+El script reinicia automáticamente todos los archivos `.json` ubicados directamente en `backend/src/data`. No modifica los archivos de ejemplo ubicados en `backend/src/data/samples`.
 
 ## Configuración inicial
 

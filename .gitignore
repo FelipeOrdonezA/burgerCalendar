@@ -43,3 +43,5 @@ Thumbs.db
 # Datos generados de la aplicación
 backend/data/cronogramas/*.json
 !backend/data/cronogramas/.gitkeep
+backend/src/data/*.json
+!backend/src/data/samples/*.json

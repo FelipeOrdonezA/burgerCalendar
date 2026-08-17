@@ -1,0 +1,21 @@
+[
+  {
+    "id": "requirement-sample",
+    "siteId": "site-sample",
+    "categoryId": "category-sample",
+    "weeklyQuantities": {
+      "monday": 1,
+      "tuesday": 1,
+      "wednesday": 1,
+      "thursday": 1,
+      "friday": 1,
+      "saturday": 1,
+      "sunday": 1,
+      "holiday": 1
+    },
+    "notes": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:00:00.000Z",
+    "updatedAt": "2026-08-17T00:00:00.000Z"
+  }
+]

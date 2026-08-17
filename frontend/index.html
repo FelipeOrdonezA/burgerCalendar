@@ -261,10 +261,13 @@
             <button class="sidebar-item" type="button" data-scheduler-tab="demand">Demanda</button>
             <button class="sidebar-item" type="button" data-scheduler-tab="alerts">Alertas</button>
           </nav>
-          <a class="sidebar-link" href="#/">Volver al inicio</a>
         </aside>
 
         <section class="scheduler-content">
+          <button id="expandSidebarButton" class="scheduler-expand-button" type="button" aria-label="Mostrar barra lateral" hidden>
+            &gt;
+          </button>
+
           <section id="schedulePanel" class="scheduler-panel is-visible" data-scheduler-panel="schedule">
             <header class="scheduler-topbar">
               <div>
@@ -273,7 +276,7 @@
                 <p>Los puestos se construyen desde los requerimientos configurados.</p>
               </div>
               <div class="header-actions">
-                <button id="expandSidebarButton" class="secondary" type="button" hidden>Mostrar menu</button>
+                <a class="secondary-link" href="#/">Inicio</a>
                 <button id="schedulerRefreshButton" class="secondary" type="button">Actualizar datos</button>
                 <button id="clearCalendarButton" type="button">Limpiar asignaciones</button>
               </div>

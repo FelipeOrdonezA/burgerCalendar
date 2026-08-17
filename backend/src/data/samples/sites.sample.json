@@ -1,0 +1,10 @@
+[
+  {
+    "id": "site-sample",
+    "name": "Sede ejemplo",
+    "location": "Ubicacion ejemplo",
+    "active": true,
+    "createdAt": "2026-08-17T00:00:00.000Z",
+    "updatedAt": "2026-08-17T00:00:00.000Z"
+  }
+]

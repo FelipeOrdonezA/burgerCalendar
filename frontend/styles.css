@@ -65,7 +65,7 @@ button {
 
 button.secondary,
 .item button {
-  min-height: 32px;
+  min-height: 40px;
   border-color: var(--line);
   background: white;
   color: var(--ink);
@@ -409,6 +409,33 @@ textarea {
   width: 34px;
 }
 
+.scheduler-expand-button {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: inline-flex;
+  font-size: 20px;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0;
+  width: 40px;
+}
+
+.scheduler-expand-button {
+  background: var(--panel);
+  box-shadow: 0 8px 20px rgba(32, 33, 36, 0.12);
+  color: var(--ink);
+  left: 14px;
+  position: fixed;
+  top: 14px;
+  z-index: 15;
+}
+
+.scheduler-expand-button[hidden] {
+  display: none;
+}
+
 .scheduler-sidebar .eyebrow {
   color: #8ce0bf;
 }
@@ -456,6 +483,7 @@ textarea {
 .scheduler-content {
   min-width: 0;
   padding: 28px;
+  position: relative;
 }
 
 .scheduler-panel {
@@ -747,7 +775,7 @@ textarea {
 }
 
 .compact-button {
-  min-height: 32px;
+  min-height: 40px;
 }
 
 .calendar-table {

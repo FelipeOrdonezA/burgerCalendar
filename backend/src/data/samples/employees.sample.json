@@ -1,0 +1,15 @@
+[
+  {
+    "id": "employee-sample",
+    "name": "Empleado ejemplo",
+    "categoryId": "category-sample",
+    "preferredSiteId": "site-sample",
+    "backupCategoryIds": [],
+    "teamLeader": false,
+    "phone": "",
+    "notes": "",
+    "active": true,
+    "createdAt": "2026-08-17T00:00:00.000Z",
+    "updatedAt": "2026-08-17T00:00:00.000Z"
+  }
+]

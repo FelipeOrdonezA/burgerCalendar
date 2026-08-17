@@ -1,0 +1,49 @@
+[
+  {
+    "id": "calendar-sample",
+    "name": "Semana del 2026-08-17 al 2026-08-23",
+    "weekStartDate": "2026-08-17",
+    "weekEndDate": "2026-08-23",
+    "status": "draft",
+    "assignments": [
+      {
+        "slotId": "site-sample-monday-category-sample-0",
+        "siteId": "site-sample",
+        "siteName": "Sede ejemplo",
+        "dayKey": "monday",
+        "categoryId": "category-sample",
+        "categoryName": "Cargo ejemplo",
+        "slotIndex": 1,
+        "isAdditional": false,
+        "employeeId": "employee-sample",
+        "employeeName": "Empleado ejemplo"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "calendar-task-sample",
+        "siteId": "site-sample",
+        "siteName": "Sede ejemplo",
+        "dayKey": "monday",
+        "taskId": "task-sample",
+        "taskName": "Tarea ejemplo",
+        "assignmentMode": "team",
+        "employeeId": "",
+        "employeeName": ""
+      }
+    ],
+    "exceptions": [
+      {
+        "alertId": "alert-sample",
+        "type": "rest-many",
+        "title": "Empleado ejemplo tiene 2 descansos",
+        "detail": "Tiene descanso el lunes y el jueves.",
+        "justification": "Justificacion de ejemplo.",
+        "createdAt": "2026-08-17T00:00:00.000Z"
+      }
+    ],
+    "notes": "",
+    "createdAt": "2026-08-17T00:00:00.000Z",
+    "updatedAt": "2026-08-17T00:00:00.000Z"
+  }
+]
