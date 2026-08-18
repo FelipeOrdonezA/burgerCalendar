@@ -14,9 +14,11 @@ export interface CalendarAssignmentSnapshot {
 }
 
 export type CalendarTaskAssignmentMode = "team" | "person";
+export type CalendarTaskScope = "site" | "general";
 
 export interface CalendarTaskSnapshot {
   id: string;
+  scope?: CalendarTaskScope;
   siteId: string;
   siteName: string;
   dayKey: string;

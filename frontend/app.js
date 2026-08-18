@@ -9,6 +9,7 @@ const DAYS = [
   ["sunday", "Domingo"],
 ];
 const WEEKEND_REST_DAYS = ["friday", "saturday", "sunday"];
+const GENERAL_TASKS_SITE_ID = "__general__";
 
 const state = {
   categories: [],
@@ -378,41 +379,74 @@ async function request(path, options = {}) {
   return payload;
 }
 
-async function downloadSiteCalendar(siteId) {
+async function downloadCalendarImage(node, fileName, successMessage, errorMessage) {
   if (!window.htmlToImage) {
     showStatus("No fue posible cargar la herramienta de descarga de imagen.", "error");
     return;
   }
 
-  const site = state.sites.find((item) => item.id === siteId);
-  const siteNode = document.querySelector(`[data-site-calendar="${siteId}"]`);
-  if (!site || !siteNode) return;
+  if (!node) return;
 
-  siteNode.classList.add("is-exporting");
+  node.classList.add("is-exporting");
 
   try {
-    const dataUrl = await window.htmlToImage.toPng(siteNode, {
+    const dataUrl = await window.htmlToImage.toPng(node, {
       backgroundColor: "#ffffff",
       cacheBust: true,
       pixelRatio: 2,
-      width: siteNode.scrollWidth,
-      height: siteNode.scrollHeight,
+      width: node.scrollWidth,
+      height: node.scrollHeight,
       style: {
         transform: "none",
-        width: `${siteNode.scrollWidth}px`,
+        width: `${node.scrollWidth}px`,
       },
     });
 
     const link = document.createElement("a");
-    link.download = `${slugifyFileName(site.name)}-${state.selectedWeek?.start || "semana"}.png`;
+    link.download = fileName;
     link.href = dataUrl;
     link.click();
-    showStatus("Imagen de la sede descargada correctamente.", "success");
+    showStatus(successMessage, "success");
   } catch {
-    showStatus("No fue posible descargar la imagen de la sede.", "error");
+    showStatus(errorMessage, "error");
   } finally {
-    siteNode.classList.remove("is-exporting");
+    node.classList.remove("is-exporting");
   }
+}
+
+async function downloadSiteCalendar(siteId) {
+  const site = state.sites.find((item) => item.id === siteId);
+  const siteNode = document.querySelector(`[data-site-calendar="${siteId}"]`);
+  if (!site || !siteNode) return;
+
+  await downloadCalendarImage(
+    siteNode,
+    `${slugifyFileName(site.name)}-${state.selectedWeek?.start || "semana"}.png`,
+    "Imagen de la sede descargada correctamente.",
+    "No fue posible descargar la imagen de la sede.",
+  );
+}
+
+async function downloadRestsCalendar() {
+  const restsNode = document.querySelector("[data-rests-calendar]");
+
+  await downloadCalendarImage(
+    restsNode,
+    `descansos-${state.selectedWeek?.start || "semana"}.png`,
+    "Imagen de descansos descargada correctamente.",
+    "No fue posible descargar la imagen de descansos.",
+  );
+}
+
+async function downloadGeneralTasksCalendar() {
+  const tasksNode = document.querySelector("[data-general-tasks-calendar]");
+
+  await downloadCalendarImage(
+    tasksNode,
+    `tareas-${state.selectedWeek?.start || "semana"}.png`,
+    "Imagen de tareas descargada correctamente.",
+    "No fue posible descargar la imagen de tareas.",
+  );
 }
 
 function render() {
@@ -486,7 +520,7 @@ function renderCalendar() {
   }
 
   elements.calendarGrid.innerHTML = state.sites.map(renderSiteCalendar).join("");
-  elements.restsGrid.innerHTML = renderRestsSummary();
+  elements.restsGrid.innerHTML = `${renderGeneralTasksSummary()}${renderRestsSummary()}`;
 
   elements.calendarGrid.querySelectorAll("[data-calendar-slot]").forEach((select) => {
     select.addEventListener("change", () => {
@@ -514,6 +548,30 @@ function renderCalendar() {
 
   elements.calendarGrid.querySelectorAll("[data-download-site]").forEach((button) => {
     button.addEventListener("click", () => downloadSiteCalendar(button.dataset.downloadSite));
+  });
+
+  elements.restsGrid.querySelectorAll("[data-download-rests]").forEach((button) => {
+    button.addEventListener("click", downloadRestsCalendar);
+  });
+
+  elements.restsGrid.querySelectorAll("[data-download-general-tasks]").forEach((button) => {
+    button.addEventListener("click", downloadGeneralTasksCalendar);
+  });
+
+  elements.restsGrid.querySelectorAll("[data-add-general-calendar-task]").forEach((button) => {
+    button.addEventListener("click", () => addGeneralCalendarTask(button.dataset.dayKey));
+  });
+
+  elements.restsGrid.querySelectorAll("[data-calendar-task]").forEach((select) => {
+    select.addEventListener("change", () => updateCalendarTask(select.dataset.calendarTask, { taskId: select.value }));
+  });
+
+  elements.restsGrid.querySelectorAll("[data-calendar-task-responsible]").forEach((select) => {
+    select.addEventListener("change", () => updateCalendarTask(select.dataset.calendarTaskResponsible, { employeeId: select.value }));
+  });
+
+  elements.restsGrid.querySelectorAll("[data-delete-calendar-task]").forEach((button) => {
+    button.addEventListener("click", () => deleteCalendarTask(button.dataset.deleteCalendarTask));
   });
 
   elements.calendarGrid.querySelectorAll("[data-add-calendar-task]").forEach((button) => {
@@ -684,7 +742,9 @@ function renderDayTasks(siteId, dayKey) {
 function renderCalendarTaskEntry(entry) {
   const task = state.tasks.find((item) => item.id === entry.taskId);
   const selectedTask = task || null;
-  const assignedEmployees = getAssignedEmployeesForSiteDay(entry.siteId, entry.dayKey);
+  const assignedEmployees = isGeneralCalendarTask(entry)
+    ? state.employees.filter((employee) => employee.active !== false)
+    : getAssignedEmployeesForSiteDay(entry.siteId, entry.dayKey);
   const selectedEmployee = state.employees.find((employee) => employee.id === entry.employeeId);
   const isPersonTask = selectedTask?.assignmentMode === "person";
   const isApproved = state.currentCalendar?.status === "approved";
@@ -732,16 +792,61 @@ function renderCalendarTaskEntry(entry) {
   `;
 }
 
-function renderRestsSummary() {
-  const restDayCounts = getRestDayCountsByEmployeeId();
+function renderGeneralTasksSummary() {
+  const isApproved = state.currentCalendar?.status === "approved";
 
   return `
-    <section class="calendar-site rests-card">
+    <section class="calendar-site general-tasks-card" data-general-tasks-calendar>
+      <div class="calendar-site-header">
+        <div>
+          <h3>Tareas</h3>
+          <p>Tareas generales por dia</p>
+        </div>
+        <div class="calendar-site-actions">
+          ${isApproved ? `<button class="secondary compact-button export-hidden" type="button" data-download-general-tasks title="Descargar imagen">Descargar PNG</button>` : ""}
+        </div>
+      </div>
+      <div class="calendar-table">
+        <div class="calendar-head">
+          ${DAYS.map(([dayKey, label]) => `
+            <div class="calendar-head-day">
+              <span>${label}</span>
+              <button class="tiny-button" type="button" data-add-general-calendar-task data-day-key="${dayKey}" title="Agregar tarea" ${isApproved ? "disabled" : ""}>+</button>
+            </div>
+          `).join("")}
+        </div>
+        <div class="calendar-row">
+          ${DAYS.map(([dayKey]) => `
+            <div class="calendar-day">
+              <div class="general-task-list">
+                ${getGeneralCalendarTaskEntries(dayKey).length
+                  ? getGeneralCalendarTaskEntries(dayKey).map((entry) => renderCalendarTaskEntry(entry)).join("")
+                  : `<p class="empty task-empty">Sin tareas</p>`}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderRestsSummary() {
+  const restDayCounts = getRestDayCountsByEmployeeId();
+  const isApproved = state.currentCalendar?.status === "approved";
+
+  return `
+    <section class="calendar-site rests-card" data-rests-calendar>
       <div class="calendar-site-header">
         <div>
           <h3>Descansos</h3>
           <p>Personas sin asignacion por dia</p>
         </div>
+        ${isApproved ? `
+          <div class="calendar-site-actions">
+            <button class="secondary compact-button export-hidden" type="button" data-download-rests title="Descargar imagen">Descargar PNG</button>
+          </div>
+        ` : ""}
       </div>
       <div class="calendar-table">
         <div class="calendar-head">
@@ -1531,6 +1636,28 @@ function addCalendarTask(siteId, dayKey) {
   renderCalendar();
 }
 
+function addGeneralCalendarTask(dayKey) {
+  if (state.currentCalendar?.status === "approved") return;
+  if (!state.tasks.length) {
+    showStatus("Crea tareas en configuracion inicial antes de asignarlas al calendario.", "error");
+    return;
+  }
+
+  const key = getCalendarTaskKey(GENERAL_TASKS_SITE_ID, dayKey);
+  state.calendarTasks[key] = [
+    ...(state.calendarTasks[key] || []),
+    {
+      id: createCalendarTaskEntryId(),
+      siteId: GENERAL_TASKS_SITE_ID,
+      dayKey,
+      taskId: "",
+      employeeId: "",
+      isGeneral: true,
+    },
+  ];
+  renderCalendar();
+}
+
 function updateCalendarTask(entryId, changes) {
   if (state.currentCalendar?.status === "approved") return;
 
@@ -1547,8 +1674,9 @@ function updateCalendarTask(entryId, changes) {
         }
 
         if (nextEntry.employeeId) {
-          const assignedEmployeeIds = getAssignedEmployeesForSiteDay(nextEntry.siteId, nextEntry.dayKey)
-            .map((employee) => employee.id);
+          const assignedEmployeeIds = isGeneralCalendarTask(nextEntry)
+            ? state.employees.filter((employee) => employee.active !== false).map((employee) => employee.id)
+            : getAssignedEmployeesForSiteDay(nextEntry.siteId, nextEntry.dayKey).map((employee) => employee.id);
           if (!assignedEmployeeIds.includes(nextEntry.employeeId)) {
             nextEntry.employeeId = "";
           }
@@ -1577,8 +1705,16 @@ function getCalendarTaskEntries(siteId, dayKey) {
   return state.calendarTasks[getCalendarTaskKey(siteId, dayKey)] || [];
 }
 
+function getGeneralCalendarTaskEntries(dayKey) {
+  return state.calendarTasks[getCalendarTaskKey(GENERAL_TASKS_SITE_ID, dayKey)] || [];
+}
+
 function getCalendarTaskKey(siteId, dayKey) {
   return `${siteId}::${dayKey}`;
+}
+
+function isGeneralCalendarTask(entry) {
+  return entry.isGeneral || entry.siteId === GENERAL_TASKS_SITE_ID || entry.scope === "general";
 }
 
 function createCalendarTaskEntryId() {
@@ -1596,16 +1732,18 @@ function getAssignedEmployeesForSiteDay(siteId, dayKey) {
 
 function buildCalendarTaskSnapshots() {
   return Object.values(state.calendarTasks).flat().flatMap((entry) => {
-    const site = state.sites.find((item) => item.id === entry.siteId);
+    const isGeneral = isGeneralCalendarTask(entry);
+    const site = isGeneral ? null : state.sites.find((item) => item.id === entry.siteId);
     const task = state.tasks.find((item) => item.id === entry.taskId);
     const employee = state.employees.find((item) => item.id === entry.employeeId);
 
-    if (!site || !task) return [];
+    if ((!isGeneral && !site) || !task) return [];
 
     return {
       id: entry.id,
-      siteId: entry.siteId,
-      siteName: site.name,
+      scope: isGeneral ? "general" : "site",
+      siteId: isGeneral ? "" : entry.siteId,
+      siteName: isGeneral ? "" : site.name,
       dayKey: entry.dayKey,
       taskId: task.id,
       taskName: task.name,
@@ -1618,15 +1756,18 @@ function buildCalendarTaskSnapshots() {
 
 function tasksFromCalendar(calendar) {
   return (calendar.tasks || []).reduce((groupedTasks, task) => {
-    const key = getCalendarTaskKey(task.siteId, task.dayKey);
+    const isGeneral = task.scope === "general" || !task.siteId;
+    const siteId = isGeneral ? GENERAL_TASKS_SITE_ID : task.siteId;
+    const key = getCalendarTaskKey(siteId, task.dayKey);
     groupedTasks[key] = [
       ...(groupedTasks[key] || []),
       {
         id: task.id || createCalendarTaskEntryId(),
-        siteId: task.siteId,
+        siteId,
         dayKey: task.dayKey,
         taskId: task.taskId,
         employeeId: task.employeeId || "",
+        isGeneral,
       },
     ];
     return groupedTasks;
@@ -1635,6 +1776,7 @@ function tasksFromCalendar(calendar) {
 
 function visibleTaskSectionsFromTasks(tasks) {
   return tasks.reduce((sections, task) => {
+    if (task.scope === "general" || !task.siteId) return sections;
     sections[task.siteId] = true;
     return sections;
   }, {});
