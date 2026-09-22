@@ -5,6 +5,8 @@
 El proyecto conserva JSON locales durante el desarrollo y utiliza un Blob store
 privado en Vercel. El frontend y la API se despliegan juntos desde GitHub.
 
+Aplicacion publicada: [https://burger-calendar.vercel.app/](https://burger-calendar.vercel.app/)
+
 Consulta la [guia de configuracion y despliegue](docs/vercel-deployment.md) para
 los campos de Vercel, variables de entorno e importacion inicial de datos.
 
@@ -26,6 +28,10 @@ El proyecto busca reducir errores en la programación del personal de varias sed
 ## Estado actual
 
 El proyecto alcanzó el hito de **MVP funcional del programador**.
+
+El **22 de septiembre de 2026** se completó la publicación del MVP en Vercel.
+La aplicación está operativa con frontend, API Express y persistencia de los
+datos actuales en Vercel Blob.
 
 Este hito incluye:
 
