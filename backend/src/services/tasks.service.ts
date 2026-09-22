@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { JsonFileRepository } from "../repositories/json-file.repository";
+import { createRepository } from "../repositories/repository-factory";
 import type { Task, TaskAssignmentMode, TaskInput } from "../types/task";
 
-const tasksRepository = new JsonFileRepository<Task>("tasks.json");
+const tasksRepository = createRepository<Task>("tasks.json");
 const ASSIGNMENT_MODES: TaskAssignmentMode[] = ["team", "person"];
 
 export async function listTasks(): Promise<Task[]> {
@@ -20,7 +20,7 @@ export async function createTask(input: TaskInput): Promise<Task> {
     throw new Error("TASK_NAME_REQUIRED");
   }
 
-  const tasks = await tasksRepository.findAll();
+  const { items: tasks, version } = await tasksRepository.readSnapshot();
   const exists = tasks.some((task) => task.name.toLowerCase() === name.toLowerCase());
   if (exists) {
     throw new Error("TASK_NAME_DUPLICATED");
@@ -38,12 +38,12 @@ export async function createTask(input: TaskInput): Promise<Task> {
   };
 
   tasks.push(task);
-  await tasksRepository.saveAll(tasks);
+  await tasksRepository.saveAll(tasks, version);
   return task;
 }
 
 export async function updateTask(id: string, input: TaskInput): Promise<Task | undefined> {
-  const tasks = await tasksRepository.findAll();
+  const { items: tasks, version } = await tasksRepository.readSnapshot();
   const index = tasks.findIndex((task) => task.id === id);
   if (index === -1) return undefined;
 
@@ -68,16 +68,16 @@ export async function updateTask(id: string, input: TaskInput): Promise<Task | u
   };
 
   tasks[index] = updated;
-  await tasksRepository.saveAll(tasks);
+  await tasksRepository.saveAll(tasks, version);
   return updated;
 }
 
 export async function deleteTask(id: string): Promise<boolean> {
-  const tasks = await tasksRepository.findAll();
+  const { items: tasks, version } = await tasksRepository.readSnapshot();
   const nextTasks = tasks.filter((task) => task.id !== id);
   if (nextTasks.length === tasks.length) return false;
 
-  await tasksRepository.saveAll(nextTasks);
+  await tasksRepository.saveAll(nextTasks, version);
   return true;
 }
 

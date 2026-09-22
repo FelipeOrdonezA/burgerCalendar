@@ -1,5 +1,6 @@
+import { testDataDirectory } from "./test-environment";
 import assert from "node:assert/strict";
-import { readFile, writeFile } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
   createCategory,
@@ -44,21 +45,14 @@ import {
   updateTask,
 } from "../services/tasks.service";
 
-const categoriesFile = resolve(process.cwd(), "src", "data", "categories.json");
-const employeesFile = resolve(process.cwd(), "src", "data", "employees.json");
-const sitesFile = resolve(process.cwd(), "src", "data", "sites.json");
-const staffRequirementsFile = resolve(process.cwd(), "src", "data", "staff-requirements.json");
-const calendarsFile = resolve(process.cwd(), "src", "data", "calendars.json");
-const tasksFile = resolve(process.cwd(), "src", "data", "tasks.json");
+const categoriesFile = resolve(testDataDirectory, "categories.json");
+const employeesFile = resolve(testDataDirectory, "employees.json");
+const sitesFile = resolve(testDataDirectory, "sites.json");
+const staffRequirementsFile = resolve(testDataDirectory, "staff-requirements.json");
+const calendarsFile = resolve(testDataDirectory, "calendars.json");
+const tasksFile = resolve(testDataDirectory, "tasks.json");
 
 async function run(): Promise<void> {
-  const originalCategories = await readFile(categoriesFile, "utf-8");
-  const originalEmployees = await readFile(employeesFile, "utf-8");
-  const originalSites = await readFile(sitesFile, "utf-8");
-  const originalStaffRequirements = await readFile(staffRequirementsFile, "utf-8");
-  const originalCalendars = await readFile(calendarsFile, "utf-8");
-  const originalTasks = await readFile(tasksFile, "utf-8");
-
   try {
     await resetData();
     await testCategoriesService();
@@ -69,12 +63,7 @@ async function run(): Promise<void> {
     await testTasksService();
     console.log("Service tests passed");
   } finally {
-    await writeFile(categoriesFile, originalCategories, "utf-8");
-    await writeFile(employeesFile, originalEmployees, "utf-8");
-    await writeFile(sitesFile, originalSites, "utf-8");
-    await writeFile(staffRequirementsFile, originalStaffRequirements, "utf-8");
-    await writeFile(calendarsFile, originalCalendars, "utf-8");
-    await writeFile(tasksFile, originalTasks, "utf-8");
+    await rm(testDataDirectory, { recursive: true, force: true });
   }
 }
 

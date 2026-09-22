@@ -1,0 +1,7 @@
+backend/src/data/**
+backend/src/tests/**
+backend/src/scripts/**
+backend/dist/tests/**
+backend/dist/scripts/**
+.env*
+.git/**

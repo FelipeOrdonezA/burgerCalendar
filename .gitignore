@@ -44,4 +44,9 @@ Thumbs.db
 backend/data/cronogramas/*.json
 !backend/data/cronogramas/.gitkeep
 backend/src/data/*.json
+backend/src/data/*.tmp
 !backend/src/data/samples/*.json
+
+# Vercel and generated static output
+.vercel/
+public/

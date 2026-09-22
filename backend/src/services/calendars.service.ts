@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { JsonFileRepository } from "../repositories/json-file.repository";
+import { createRepository } from "../repositories/repository-factory";
 import type {
   Calendar,
   CalendarAssignmentSnapshot,
@@ -8,7 +8,7 @@ import type {
   CalendarTaskSnapshot,
 } from "../types/calendar";
 
-const calendarsRepository = new JsonFileRepository<Calendar>("calendars.json");
+const calendarsRepository = createRepository<Calendar>("calendars.json");
 
 export async function listCalendars(): Promise<Calendar[]> {
   const calendars = await calendarsRepository.findAll();
@@ -30,7 +30,7 @@ export async function saveCalendarDraft(input: CalendarInput): Promise<Calendar>
   const assignments = normalizeAssignments(input.assignments);
   const tasks = normalizeTasks(input.tasks);
   const exceptions = normalizeExceptions(input.exceptions);
-  const calendars = await calendarsRepository.findAll();
+  const { items: calendars, version } = await calendarsRepository.readSnapshot();
   const index = calendars.findIndex((calendar) => calendar.weekStartDate === weekStartDate);
   const now = new Date().toISOString();
 
@@ -52,7 +52,7 @@ export async function saveCalendarDraft(input: CalendarInput): Promise<Calendar>
     };
 
     calendars[index] = updated;
-    await calendarsRepository.saveAll(calendars);
+    await calendarsRepository.saveAll(calendars, version);
     return updated;
   }
 
@@ -76,12 +76,12 @@ export async function saveCalendarDraft(input: CalendarInput): Promise<Calendar>
   };
 
   calendars.push(calendar);
-  await calendarsRepository.saveAll(calendars);
+  await calendarsRepository.saveAll(calendars, version);
   return calendar;
 }
 
 export async function approveCalendar(id: string): Promise<Calendar | undefined> {
-  const calendars = await calendarsRepository.findAll();
+  const { items: calendars, version } = await calendarsRepository.readSnapshot();
   const index = calendars.findIndex((calendar) => calendar.id === id);
   if (index === -1) return undefined;
 
@@ -95,12 +95,12 @@ export async function approveCalendar(id: string): Promise<Calendar | undefined>
   };
 
   calendars[index] = updated;
-  await calendarsRepository.saveAll(calendars);
+  await calendarsRepository.saveAll(calendars, version);
   return updated;
 }
 
 export async function reopenCalendarDraft(id: string): Promise<Calendar | undefined> {
-  const calendars = await calendarsRepository.findAll();
+  const { items: calendars, version } = await calendarsRepository.readSnapshot();
   const index = calendars.findIndex((calendar) => calendar.id === id);
   if (index === -1) return undefined;
 
@@ -113,7 +113,7 @@ export async function reopenCalendarDraft(id: string): Promise<Calendar | undefi
   };
 
   calendars[index] = updated;
-  await calendarsRepository.saveAll(calendars);
+  await calendarsRepository.saveAll(calendars, version);
   return updated;
 }
 

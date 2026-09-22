@@ -1,3 +1,4 @@
+import { respondToStorageError } from "../utils/storage-error-response";
 import type { Request, Response } from "express";
 import {
   approveCalendar,
@@ -38,6 +39,7 @@ export async function postCalendarDraft(req: Request, res: Response): Promise<vo
     const calendar = await saveCalendarDraft(req.body);
     res.status(200).json({ ok: true, data: calendar });
   } catch (error) {
+    if (respondToStorageError(error, res)) return;
     res.status(400).json({ ok: false, message: calendarErrorMessage(error) });
   }
 }

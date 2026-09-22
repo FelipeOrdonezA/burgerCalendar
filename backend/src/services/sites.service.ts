@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { JsonFileRepository } from "../repositories/json-file.repository";
+import { createRepository } from "../repositories/repository-factory";
 import type { Site, SiteInput } from "../types/site";
 
-const sitesRepository = new JsonFileRepository<Site>("sites.json");
+const sitesRepository = createRepository<Site>("sites.json");
 
 export async function listSites(): Promise<Site[]> {
   return sitesRepository.findAll();
@@ -18,7 +18,7 @@ export async function createSite(input: SiteInput): Promise<Site> {
     throw new Error("SITE_NAME_REQUIRED");
   }
 
-  const sites = await sitesRepository.findAll();
+  const { items: sites, version } = await sitesRepository.readSnapshot();
   const exists = sites.some((site) => site.name.toLowerCase() === name.toLowerCase());
   if (exists) {
     throw new Error("SITE_NAME_DUPLICATED");
@@ -35,12 +35,12 @@ export async function createSite(input: SiteInput): Promise<Site> {
   };
 
   sites.push(site);
-  await sitesRepository.saveAll(sites);
+  await sitesRepository.saveAll(sites, version);
   return site;
 }
 
 export async function updateSite(id: string, input: SiteInput): Promise<Site | undefined> {
-  const sites = await sitesRepository.findAll();
+  const { items: sites, version } = await sitesRepository.readSnapshot();
   const index = sites.findIndex((site) => site.id === id);
   if (index === -1) return undefined;
 
@@ -62,15 +62,15 @@ export async function updateSite(id: string, input: SiteInput): Promise<Site | u
   };
 
   sites[index] = updated;
-  await sitesRepository.saveAll(sites);
+  await sitesRepository.saveAll(sites, version);
   return updated;
 }
 
 export async function deleteSite(id: string): Promise<boolean> {
-  const sites = await sitesRepository.findAll();
+  const { items: sites, version } = await sitesRepository.readSnapshot();
   const nextSites = sites.filter((site) => site.id !== id);
   if (nextSites.length === sites.length) return false;
 
-  await sitesRepository.saveAll(nextSites);
+  await sitesRepository.saveAll(nextSites, version);
   return true;
 }

@@ -1,5 +1,24 @@
 # Burger Calendar
 
+## Despliegue en Vercel
+
+El proyecto conserva JSON locales durante el desarrollo y utiliza un Blob store
+privado en Vercel. El frontend y la API se despliegan juntos desde GitHub.
+
+Consulta la [guia de configuracion y despliegue](docs/vercel-deployment.md) para
+los campos de Vercel, variables de entorno e importacion inicial de datos.
+
+Comandos desde la raiz:
+
+```bash
+npm run dev:all
+npm run build
+npm test
+```
+
+Tambien puedes iniciar dos terminales con `npm run dev` y `npm run frontend`.
+Las pruebas usan datos temporales y no modifican los JSON operativos.
+
 Aplicación web para configurar, construir, validar y aprobar cronogramas semanales del equipo de Burger Paisa.
 
 El proyecto busca reducir errores en la programación del personal de varias sedes, controlar descansos, asignaciones, tareas operativas y requerimientos por cargo. El MVP actual ya es funcional y está listo para pruebas en ambiente real con datos limpios.

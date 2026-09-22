@@ -1,3 +1,4 @@
+import { respondToStorageError } from "../utils/storage-error-response";
 import type { Request, Response } from "express";
 import {
   createStaffRequirement,
@@ -27,6 +28,7 @@ export async function postStaffRequirement(req: Request, res: Response): Promise
     const requirement = await createStaffRequirement(req.body);
     res.status(201).json({ ok: true, data: requirement });
   } catch (error) {
+    if (respondToStorageError(error, res)) return;
     res.status(400).json({ ok: false, message: staffRequirementErrorMessage(error) });
   }
 }
@@ -41,6 +43,7 @@ export async function patchStaffRequirement(req: Request, res: Response): Promis
 
     res.status(200).json({ ok: true, data: requirement });
   } catch (error) {
+    if (respondToStorageError(error, res)) return;
     res.status(400).json({ ok: false, message: staffRequirementErrorMessage(error) });
   }
 }

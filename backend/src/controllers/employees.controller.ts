@@ -1,3 +1,4 @@
+import { respondToStorageError } from "../utils/storage-error-response";
 import type { Request, Response } from "express";
 import {
   createEmployee as createEmployeeService,
@@ -27,6 +28,7 @@ export async function createEmployee(req: Request, res: Response): Promise<void>
     const employee = await createEmployeeService(req.body);
     res.status(201).json({ ok: true, data: employee });
   } catch (error) {
+    if (respondToStorageError(error, res)) return;
     res.status(400).json({ ok: false, message: employeeErrorMessage(error) });
   }
 }
@@ -41,6 +43,7 @@ export async function updateEmployee(req: Request, res: Response): Promise<void>
 
     res.status(200).json({ ok: true, data: employee });
   } catch (error) {
+    if (respondToStorageError(error, res)) return;
     res.status(400).json({ ok: false, message: employeeErrorMessage(error) });
   }
 }

@@ -1,8 +1,12 @@
 import { readdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { localDataDirectory, storageDriver } from "../repositories/storage-config";
 
 async function resetData(): Promise<void> {
-  const dataPath = resolve(process.cwd(), "src", "data");
+  if (storageDriver() !== "local") {
+    throw new Error("data:reset solo esta disponible para archivos locales.");
+  }
+  const dataPath = localDataDirectory();
   const dataFiles = (await readdir(dataPath)).filter((fileName) => fileName.endsWith(".json"));
 
   await Promise.all(

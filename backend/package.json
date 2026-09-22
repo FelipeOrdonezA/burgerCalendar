@@ -11,9 +11,12 @@
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only ./src/utils/server.ts",
     "data:reset": "ts-node ./src/scripts/reset-data.ts",
-    "test:services": "ts-node ./src/tests/services.test.ts"
+    "test:services": "ts-node ./src/tests/services.test.ts",
+    "test:storage": "ts-node ./src/tests/storage.test.ts",
+    "data:import:blob": "node --env-file-if-exists=../.env.local -r ts-node/register ./src/scripts/import-blob.ts"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "axios": "^1.18.1",
     "cors": "^2.8.6",
     "cros": "^1.1.0",

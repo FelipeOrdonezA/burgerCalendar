@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { JsonFileRepository } from "../repositories/json-file.repository";
+import { createRepository } from "../repositories/repository-factory";
 import type { Category, CategoryInput } from "../types/category";
 
-const categoriesRepository = new JsonFileRepository<Category>("categories.json");
+const categoriesRepository = createRepository<Category>("categories.json");
 
 export async function listCategories(): Promise<Category[]> {
   return categoriesRepository.findAll();
@@ -18,7 +18,7 @@ export async function createCategory(input: CategoryInput): Promise<Category> {
     throw new Error("CATEGORY_NAME_REQUIRED");
   }
 
-  const categories = await categoriesRepository.findAll();
+  const { items: categories, version } = await categoriesRepository.readSnapshot();
   const exists = categories.some((category) => category.name.toLowerCase() === name.toLowerCase());
   if (exists) {
     throw new Error("CATEGORY_NAME_DUPLICATED");
@@ -37,12 +37,12 @@ export async function createCategory(input: CategoryInput): Promise<Category> {
   };
 
   categories.push(category);
-  await categoriesRepository.saveAll(categories);
+  await categoriesRepository.saveAll(categories, version);
   return category;
 }
 
 export async function updateCategory(id: string, input: CategoryInput): Promise<Category | undefined> {
-  const categories = await categoriesRepository.findAll();
+  const { items: categories, version } = await categoriesRepository.readSnapshot();
   const index = categories.findIndex((category) => category.id === id);
   if (index === -1) return undefined;
 
@@ -70,7 +70,7 @@ export async function updateCategory(id: string, input: CategoryInput): Promise<
   };
 
   categories[index] = updated;
-  await categoriesRepository.saveAll(categories);
+  await categoriesRepository.saveAll(categories, version);
   return updated;
 }
 
@@ -86,10 +86,10 @@ function normalizeCalendarPriority(value: number | undefined): number {
 }
 
 export async function deleteCategory(id: string): Promise<boolean> {
-  const categories = await categoriesRepository.findAll();
+  const { items: categories, version } = await categoriesRepository.readSnapshot();
   const nextCategories = categories.filter((category) => category.id !== id);
   if (nextCategories.length === categories.length) return false;
 
-  await categoriesRepository.saveAll(nextCategories);
+  await categoriesRepository.saveAll(nextCategories, version);
   return true;
 }

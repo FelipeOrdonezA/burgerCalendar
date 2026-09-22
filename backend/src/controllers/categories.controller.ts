@@ -1,3 +1,4 @@
+import { respondToStorageError } from "../utils/storage-error-response";
 import type { Request, Response } from "express";
 import {
   createCategory,
@@ -27,6 +28,7 @@ export async function postCategory(req: Request, res: Response): Promise<void> {
     const category = await createCategory(req.body);
     res.status(201).json({ ok: true, data: category });
   } catch (error) {
+    if (respondToStorageError(error, res)) return;
     res.status(400).json({ ok: false, message: categoryErrorMessage(error) });
   }
 }
@@ -41,6 +43,7 @@ export async function patchCategory(req: Request, res: Response): Promise<void> 
 
     res.status(200).json({ ok: true, data: category });
   } catch (error) {
+    if (respondToStorageError(error, res)) return;
     res.status(400).json({ ok: false, message: categoryErrorMessage(error) });
   }
 }

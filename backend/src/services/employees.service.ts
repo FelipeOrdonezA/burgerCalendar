@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { JsonFileRepository } from "../repositories/json-file.repository";
+import { createRepository } from "../repositories/repository-factory";
 import type { Employee, EmployeeInput } from "../types/employee";
 import { getCategoryById } from "./categories.service";
 import { getSiteById } from "./sites.service";
 
-const employeesRepository = new JsonFileRepository<Employee>("employees.json");
+const employeesRepository = createRepository<Employee>("employees.json");
 
 export async function listEmployees(): Promise<Employee[]> {
   return employeesRepository.findAll();
@@ -30,7 +30,7 @@ export async function createEmployee(input: EmployeeInput): Promise<Employee> {
   const preferredSiteId = await normalizePreferredSiteId(input.preferredSiteId);
   const backupCategoryIds = await normalizeBackupCategoryIds(input.backupCategoryIds, categoryId);
 
-  const employees = await employeesRepository.findAll();
+  const { items: employees, version } = await employeesRepository.readSnapshot();
   const now = new Date().toISOString();
   const employee: Employee = {
     id: randomUUID(),
@@ -47,12 +47,12 @@ export async function createEmployee(input: EmployeeInput): Promise<Employee> {
   };
 
   employees.push(employee);
-  await employeesRepository.saveAll(employees);
+  await employeesRepository.saveAll(employees, version);
   return employee;
 }
 
 export async function updateEmployee(id: string, input: EmployeeInput): Promise<Employee | undefined> {
-  const employees = await employeesRepository.findAll();
+  const { items: employees, version } = await employeesRepository.readSnapshot();
   const index = employees.findIndex((employee) => employee.id === id);
   if (index === -1) return undefined;
 
@@ -83,16 +83,16 @@ export async function updateEmployee(id: string, input: EmployeeInput): Promise<
   };
 
   employees[index] = updated;
-  await employeesRepository.saveAll(employees);
+  await employeesRepository.saveAll(employees, version);
   return updated;
 }
 
 export async function deleteEmployee(id: string): Promise<boolean> {
-  const employees = await employeesRepository.findAll();
+  const { items: employees, version } = await employeesRepository.readSnapshot();
   const nextEmployees = employees.filter((employee) => employee.id !== id);
   if (nextEmployees.length === employees.length) return false;
 
-  await employeesRepository.saveAll(nextEmployees);
+  await employeesRepository.saveAll(nextEmployees, version);
   return true;
 }
 

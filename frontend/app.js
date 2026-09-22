@@ -1,4 +1,7 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)
+  && window.location.port === "5173"
+  ? `${window.location.protocol}//${window.location.hostname}:3000/api`
+  : "/api";
 const DAYS = [
   ["monday", "Lunes"],
   ["tuesday", "Martes"],

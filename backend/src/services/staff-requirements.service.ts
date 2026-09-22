@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { JsonFileRepository } from "../repositories/json-file.repository";
+import { createRepository } from "../repositories/repository-factory";
 import type {
   StaffRequirement,
   StaffRequirementInput,
@@ -8,7 +8,7 @@ import type {
 import { getCategoryById } from "./categories.service";
 import { getSiteById } from "./sites.service";
 
-const requirementsRepository = new JsonFileRepository<StaffRequirement>("staff-requirements.json");
+const requirementsRepository = createRepository<StaffRequirement>("staff-requirements.json");
 const WEEKLY_KEYS: Array<keyof WeeklyStaffRequirement> = [
   "monday",
   "tuesday",
@@ -35,7 +35,7 @@ export async function createStaffRequirement(input: StaffRequirementInput): Prom
 
   await validateStaffRequirement(siteId, categoryId, weeklyQuantities);
 
-  const requirements = await requirementsRepository.findAll();
+  const { items: requirements, version } = await requirementsRepository.readSnapshot();
   const exists = requirements.some(
     (requirement) => requirement.siteId === siteId && requirement.categoryId === categoryId,
   );
@@ -56,7 +56,7 @@ export async function createStaffRequirement(input: StaffRequirementInput): Prom
   };
 
   requirements.push(requirement);
-  await requirementsRepository.saveAll(requirements);
+  await requirementsRepository.saveAll(requirements, version);
   return requirement;
 }
 
@@ -64,7 +64,7 @@ export async function updateStaffRequirement(
   id: string,
   input: StaffRequirementInput,
 ): Promise<StaffRequirement | undefined> {
-  const requirements = await requirementsRepository.findAll();
+  const { items: requirements, version } = await requirementsRepository.readSnapshot();
   const index = requirements.findIndex((requirement) => requirement.id === id);
   if (index === -1) return undefined;
 
@@ -96,16 +96,16 @@ export async function updateStaffRequirement(
   };
 
   requirements[index] = updated;
-  await requirementsRepository.saveAll(requirements);
+  await requirementsRepository.saveAll(requirements, version);
   return updated;
 }
 
 export async function deleteStaffRequirement(id: string): Promise<boolean> {
-  const requirements = await requirementsRepository.findAll();
+  const { items: requirements, version } = await requirementsRepository.readSnapshot();
   const nextRequirements = requirements.filter((requirement) => requirement.id !== id);
   if (nextRequirements.length === requirements.length) return false;
 
-  await requirementsRepository.saveAll(nextRequirements);
+  await requirementsRepository.saveAll(nextRequirements, version);
   return true;
 }
 
