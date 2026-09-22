@@ -1,7 +1,6 @@
-// Vercel's Express entry point. The build compiles backend/src into backend/dist.
-const express = require("express");
-const backend = require("./backend/dist/utils/app").default;
+const express = require('express');
+const backendModule = require('./backend/dist/utils/app');
 
 const app = express();
-app.use(backend);
+app.use(backendModule.default || backendModule);
 module.exports = app;
