@@ -1,6 +1,6 @@
-const express = require('express');
-const backendModule = require('./backend/dist/utils/app');
+import express from 'express';
+import backendModule from './backend/dist/utils/app.js';
 
 const app = express();
 app.use(backendModule.default || backendModule);
-module.exports = app;
+export default app;
