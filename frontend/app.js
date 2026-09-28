@@ -367,31 +367,19 @@ async function deleteTask(id) {
 }
 
 async function request(path, options = {}) {
-  const canRetryConflict = !["GET", "HEAD"].includes((options.method || "GET").toUpperCase());
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const response = await fetch(`${API_URL}${path}`, {
-      headers: { "Content-Type": "application/json" },
-      ...options,
-    });
+  if (response.status === 204) return { ok: true };
 
-    if (response.status === 204) return { ok: true };
-
-    const payload = await response.json();
-    if (response.ok) return payload;
-
-    // Blob writes use optimistic concurrency. A new request obtains a fresh
-    // ETag server-side; retry once for a transient conflict without bypassing
-    // the conditional write that protects another user's changes.
-    if (response.status === 409 && canRetryConflict && attempt === 0) {
-      await new Promise((resolve) => window.setTimeout(resolve, 150));
-      continue;
-    }
-
+  const payload = await response.json();
+  if (!response.ok) {
     throw new Error(payload.message || "La operacion no pudo completarse");
   }
 
-  throw new Error("La operacion no pudo completarse");
+  return payload;
 }
 
 async function downloadCalendarImage(node, fileName, successMessage, errorMessage) {
