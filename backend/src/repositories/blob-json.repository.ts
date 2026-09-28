@@ -1,4 +1,4 @@
-import { get, put, BlobPreconditionFailedError } from "@vercel/blob";
+import { get, put } from "@vercel/blob";
 import { parseCollection, StorageConflictError, StorageError, type Repository, type Snapshot } from "./repository";
 
 export interface BlobClient { get: typeof get; put: typeof put }
@@ -37,13 +37,12 @@ export class BlobJsonRepository<T extends { id: string }> implements Repository<
         access: "private",
         contentType: "application/json",
         addRandomSuffix: false,
+        // The application currently has one operator. Blob's conditional
+        // writes reject every update in Production despite fresh reads, so
+        // existing documents intentionally use last-write-wins semantics.
         allowOverwrite: expectedVersion !== null,
-        ...(expectedVersion !== null ? { ifMatch: expectedVersion } : {}),
       });
     } catch (error) {
-      if (error instanceof BlobPreconditionFailedError) {
-        throw new StorageConflictError();
-      }
       // The SDK reports a create collision as a generic BlobError. Confirm
       // existence instead of depending on a vendor error-message string.
       if (expectedVersion === null && (await this.readSnapshot()).version !== null) {

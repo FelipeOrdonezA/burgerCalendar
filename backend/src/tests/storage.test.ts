@@ -56,7 +56,7 @@ async function testBlob(): Promise<void> {
       assert.equal(options.addRandomSuffix, false);
       assert.equal(options.contentType, "application/json");
       if (body !== null && !options.allowOverwrite) throw new BlobError("Already exists");
-      if (options.allowOverwrite && options.ifMatch !== String(version)) {
+      if (options.ifMatch !== undefined && options.ifMatch !== String(version)) {
         throw new BlobPreconditionFailedError();
       }
       body = String(value);
@@ -71,8 +71,8 @@ async function testBlob(): Promise<void> {
   await assert.rejects(second.saveAll([{ id: "b" }], null), StorageConflictError);
   const snapshot = await first.readSnapshot();
   await second.saveAll([{ id: "b" }], snapshot.version);
-  await assert.rejects(first.saveAll([{ id: "lost" }], snapshot.version), StorageConflictError);
-  assert.deepEqual(await first.findAll(), [{ id: "b" }]);
+  await first.saveAll([{ id: "latest" }], snapshot.version);
+  assert.deepEqual(await first.findAll(), [{ id: "latest" }]);
   failReads = true;
   await assert.rejects(first.findAll(), StorageError);
   failReads = false;
